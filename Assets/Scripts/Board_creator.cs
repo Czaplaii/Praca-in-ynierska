@@ -8,61 +8,29 @@ public class Board_creator : MonoBehaviour
 {
     [SerializeField] int[,] Board = new int[9, 9];
     [SerializeField] Button[] BoardButtons;
-    [SerializeField] int lastrow, lastcol;
-    [SerializeField] List<int> numbers = new List<int>{1, 2, 3, 4, 5, 6, 7, 8, 9};
+    [SerializeField] List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    private static readonly System.Random rand = new System.Random();
+
 
     void Start()
     {
         BoardInit(Board);
-        StartCoroutine(CreateBoard(1, 0));
-
-        for(int i = 0; i<numbers.Count; i++) 
-        {
-            Debug.Log(numbers[i]);
-        }
+        //ShuffleList(numbers);
+        CreateBoard();
+        //StartCoroutine(CreateBoard(numbers[0], 0, 0));
+        PuzzleMaker();
+        StartButtonDeactivate();
     }
 
-    /*private IEnumerator CreateBoard()
-    {
-        for(int answer = 1; answer<=9; answer++)
-        {
-            int placedcounter = 0;
-            while (placedcounter <9) // ile zmieœci siê konkretnych liczb na planszy
-            {
-                while (placedcounter < 9)
-                {
-                    int RandomRow = Random.Range(0, 9);
-                    int RandomColumn = Random.Range(0, 9);
-                    if (Board[RandomRow, RandomColumn] == 0)
-                    {
-                        if (!IsInRow(RandomRow, answer) && !IsInColumn(RandomColumn, answer) && !IsInSector(RandomRow, RandomColumn, answer))
-                        {
-                            Board[RandomRow, RandomColumn] = answer;
-                            Przypisz(RandomRow, RandomColumn, answer);
-                            lastrow = RandomRow;
-                            lastcol = RandomColumn;
-                            placedcounter++;
-                        }
-                    }
-                    else
-                        yield return null;
-                }
-            }
-        }
-    }*/
+    /* metoda dzia³a, ale wykonuje siê bardzo d³ugo (wiêcej ni¿ 10 minut na kompilacjê)
 
-    private IEnumerator CreateBoard(int number, int placedCounter)
+    private IEnumerator CreateBoard(int number, int placedCounter, int index)            
     {
+        if (index >= numbers.Count) yield break;
+
         if (placedCounter == 9)
         {
-            if (number < 9)
-            {
-                yield return StartCoroutine(CreateBoard(number + 1, 0));
-            }
-            else
-            {
-                yield break;
-            }
+            yield return StartCoroutine(CreateBoard(numbers[index + 1], 0, index + 1));
         }
         else
         {
@@ -79,17 +47,66 @@ public class Board_creator : MonoBehaviour
                         Przypisz(randomRow, randomColumn, number);
                         placedCounter++;
 
-                        yield return StartCoroutine(CreateBoard(number, placedCounter));
+                        yield return StartCoroutine(CreateBoard(number, placedCounter, index));
 
-                        Board[randomRow, randomColumn] = 0;
-                        Przypisz(randomRow, randomColumn, 0);
-                        placedCounter--;
+                        if (placedCounter < 9)
+                        {
+                            Board[randomRow, randomColumn] = 0;
+                            Przypisz(randomRow, randomColumn, 0);
+                            placedCounter--;
+                        }
                     }
                 }
                 yield return null;
             }
         }
     }
+    */
+
+    void CreateBoard()
+    {
+        ShuffleList(numbers); // mieszamy numery
+        BoardFiller(0, 0);
+    }
+
+    bool BoardFiller(int row, int column)
+    {
+        if (row == 9) // czy skoñczyliœmy ostatni wiersz
+        {
+            return true; // Plansza zosta³a wype³niona
+        }
+
+        if (column == 9)
+        {
+            return BoardFiller(row + 1, 0); // skoñczyliœmy ostatni¹ kolumnê, przechodzimy do nastêpnego wiersza
+        }
+
+        // jeœli komórka jest pe³na, przechodzimy do kolejnej
+        if (Board[row, column] != 0)
+        {
+            return BoardFiller(row, column + 1);
+        }
+
+        if (Board[row, column] == 0) //jeœli komórka jest pusta
+        {
+            foreach (var number in numbers) //iteracja po liœcie numerów
+            {
+                if (!IsInRow(row, number) && !IsInColumn(column, number) && !IsInSector(row, column, number)) //czy zgodna z zasadami
+                {
+                    Board[row, column] = number; // Umieszczamy liczbê
+                    //Przypisz(row, column, number); // Aktualizujemy UI
+                    if (BoardFiller(row, column + 1)) // Jeœli nie mo¿na dalej wype³niæ
+                    {
+                        return true;
+                    }
+                    Board[row, column] = 0;
+                    //Przypisz(row, column, 0);
+                }
+            }
+        }
+        return false;
+    }
+
 
     void BoardInit(int[,] tab) //wype³niamy tablice zerami
     {
@@ -147,8 +164,9 @@ public class Board_creator : MonoBehaviour
         return false;
     }
 
-    void Przypisz(int row,int column, int answer)
+    void Przypisz(int row, int column, int answer) //wstêpny kod do zapisywania 
     {
+
         int buttonIndex = (9 * row) + column;
         TMP_Text buttonText = BoardButtons[buttonIndex].GetComponentInChildren<TMP_Text>();
         if (answer != 0)
@@ -156,11 +174,61 @@ public class Board_creator : MonoBehaviour
         else buttonText.text = " ";
     }
 
-    void ShuffleList()//Fisher-Yates shuffle
+    //¿eby tablice sudoku jak najmniej siê powtarza³y, mieszamy numery
+    void ShuffleList(List<int> list) //metoda Fisher-Yates
     {
-        for(int i = numbers.Count-1; i < 1; i--) 
-        { 
-            int k=Random.Range(0, i); 
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rand.Next(0, i + 1);
+            int temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
+    }
+
+    bool IsBoardFull()
+    {
+        for (int i = 0; i < Board.GetLength(0); i++)
+        {
+            for (int j = 0; j < Board.GetLength(1); j++)
+            {
+                if (Board[i, j] == 0)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    void PuzzleMaker() //wersja wstêpna z pokazywaniem komórek na bazie iloœci
+    {
+        //int showeasy = Random.Range(41, 51); //³atwa plansza
+        int showmedium = Random.Range(31, 41); //œrednia plansza
+        //int showhard = Random.Range(20, 30); //trudna plansza
+        for (int i = 0;i < showmedium; i++)
+        {
+            int k = Random.Range(0,81);
+            Debug.Log(showmedium);
+            TMP_Text buttonText = BoardButtons[k].GetComponentInChildren<TMP_Text>();
+            if (buttonText.text == " ")
+            {
+                buttonText.text = (Board[k % 9, k / 9]).ToString();
+            }
+            else
+            {
+                i--;
+            }
+        }
+    }
+
+    void StartButtonDeactivate()
+    {
+        for (int i = 0; i < BoardButtons.GetLength(0); i++)
+        {
+                TMP_Text buttonText = BoardButtons[i].GetComponentInChildren<TMP_Text>();
+                if (buttonText.text != " ")
+                    BoardButtons[i].interactable = false;
         }
     }
 
