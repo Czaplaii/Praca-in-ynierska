@@ -2,49 +2,91 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Board_creator : MonoBehaviour
 {
     [SerializeField] int[,] Board = new int[9, 9];
     [SerializeField] Button[] BoardButtons;
+    [SerializeField] int lastrow, lastcol;
+    [SerializeField] List<int> numbers = new List<int>{1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     void Start()
     {
-        StartCoroutine(CreateBoard());
+        BoardInit(Board);
+        StartCoroutine(CreateBoard(1, 0));
+
+        for(int i = 0; i<numbers.Count; i++) 
+        {
+            Debug.Log(numbers[i]);
+        }
     }
 
-    private IEnumerator CreateBoard()
+    /*private IEnumerator CreateBoard()
     {
-        BoardInit(Board);
         for(int answer = 1; answer<=9; answer++)
         {
             int placedcounter = 0;
             while (placedcounter <9) // ile zmieœci siê konkretnych liczb na planszy
             {
-                bool taken = false;
-                while (!taken && placedcounter < 9)
+                while (placedcounter < 9)
                 {
                     int RandomRow = Random.Range(0, 9);
                     int RandomColumn = Random.Range(0, 9);
-
                     if (Board[RandomRow, RandomColumn] == 0)
                     {
                         if (!IsInRow(RandomRow, answer) && !IsInColumn(RandomColumn, answer) && !IsInSector(RandomRow, RandomColumn, answer))
                         {
                             Board[RandomRow, RandomColumn] = answer;
-
-                            int buttonIndex = (9 * RandomRow) + RandomColumn;
-                            TMP_Text buttonText = BoardButtons[buttonIndex].GetComponentInChildren<TMP_Text>();
-                            buttonText.text = answer.ToString();
-
-                            taken = true;
+                            Przypisz(RandomRow, RandomColumn, answer);
+                            lastrow = RandomRow;
+                            lastcol = RandomColumn;
                             placedcounter++;
                         }
                     }
                     else
-                        continue;  
-                    yield return null;
+                        yield return null;
                 }
+            }
+        }
+    }*/
+
+    private IEnumerator CreateBoard(int number, int placedCounter)
+    {
+        if (placedCounter == 9)
+        {
+            if (number < 9)
+            {
+                yield return StartCoroutine(CreateBoard(number + 1, 0));
+            }
+            else
+            {
+                yield break;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 81; i++)
+            {
+                int randomRow = Random.Range(0, 9);
+                int randomColumn = Random.Range(0, 9);
+
+                if (Board[randomRow, randomColumn] == 0)
+                {
+                    if (!IsInRow(randomRow, number) && !IsInColumn(randomColumn, number) && !IsInSector(randomRow, randomColumn, number))
+                    {
+                        Board[randomRow, randomColumn] = number;
+                        Przypisz(randomRow, randomColumn, number);
+                        placedCounter++;
+
+                        yield return StartCoroutine(CreateBoard(number, placedCounter));
+
+                        Board[randomRow, randomColumn] = 0;
+                        Przypisz(randomRow, randomColumn, 0);
+                        placedCounter--;
+                    }
+                }
+                yield return null;
             }
         }
     }
@@ -104,4 +146,22 @@ public class Board_creator : MonoBehaviour
         }
         return false;
     }
+
+    void Przypisz(int row,int column, int answer)
+    {
+        int buttonIndex = (9 * row) + column;
+        TMP_Text buttonText = BoardButtons[buttonIndex].GetComponentInChildren<TMP_Text>();
+        if (answer != 0)
+            buttonText.text = answer.ToString();
+        else buttonText.text = " ";
+    }
+
+    void ShuffleList()//Fisher-Yates shuffle
+    {
+        for(int i = numbers.Count-1; i < 1; i--) 
+        { 
+            int k=Random.Range(0, i); 
+        }
+    }
+
 }
