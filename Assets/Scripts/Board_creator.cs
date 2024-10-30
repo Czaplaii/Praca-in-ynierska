@@ -18,9 +18,11 @@ public class Board_creator : MonoBehaviour
         //ShuffleList(numbers);
         CreateBoard();
         //StartCoroutine(CreateBoard(numbers[0], 0, 0));
+        DefineButtons();
         PuzzleMaker();
-        StartButtonDeactivate();
+        //StartButtonDeactivate();
     }
+
 
     /* metoda dzia³a, ale wykonuje siê bardzo d³ugo (wiêcej ni¿ 10 minut na kompilacjê)
 
@@ -100,7 +102,6 @@ public class Board_creator : MonoBehaviour
                         return true;
                     }
                     Board[row, column] = 0;
-                    //Przypisz(row, column, 0);
                 }
             }
         }
@@ -186,7 +187,7 @@ public class Board_creator : MonoBehaviour
         }
     }
 
-    bool IsBoardFull()
+    bool IsBoardFull() //warunek wype³nienia planszy
     {
         for (int i = 0; i < Board.GetLength(0); i++)
         {
@@ -219,10 +220,11 @@ public class Board_creator : MonoBehaviour
             {
                 i--;
             }
+            StartButtonDeactivate();
         }
     }
 
-    void StartButtonDeactivate()
+    void StartButtonDeactivate() // wy³¹cz guziki
     {
         for (int i = 0; i < BoardButtons.GetLength(0); i++)
         {
@@ -230,6 +232,41 @@ public class Board_creator : MonoBehaviour
                 if (buttonText.text != " ")
                     BoardButtons[i].interactable = false;
         }
+    }
+
+    void DefineButtons() //przypisanie indeksów ka¿demu guzikowi do funkcji OnButtonClicked
+    {
+        for (int i = 0; i < BoardButtons.Length; i++)
+        {
+            int index = i;
+            BoardButtons[i].onClick.AddListener(() => OnButtonClicked(index));
+        }
+
+    }
+
+public void OnButtonClicked(int index)
+    {
+        Debug.Log(BoardButtons[index] +" "+ index);
+        Debug.Log("Value " + Board[index % 9, index / 9]);
+        int declared = PlayerPrefs.GetInt("number")+1;
+        TMP_Text buttonText = BoardButtons[index].GetComponentInChildren<TMP_Text>();
+        if (declared != 0)
+        {
+            if(declared == Board[index%9, index/9])
+            {
+                Debug.Log("Brawo");
+                buttonText.text = (Board[index % 9, index / 9]).ToString();
+                BoardButtons[index].interactable = false;
+            }
+            else
+            {
+                Debug.Log("B³¹d");
+                buttonText.text = declared.ToString();
+                BoardButtons[index].image.color = Color.red;
+            }
+        }
+        else
+            Debug.Log("nie wybrano numeru");
     }
 
 }

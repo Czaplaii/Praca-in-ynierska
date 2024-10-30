@@ -29,7 +29,5 @@ public class banner_bar : MonoBehaviour
         }
         Buttons[index].interactable = false;
         PlayerPrefs.SetInt("number", index);
-        Debug.Log($"Klikniêto przycisk {index + 1}. Wy³¹czono.");
-        Debug.Log($"Playerprefs {PlayerPrefs.GetInt("number")}.");
     }
 }
