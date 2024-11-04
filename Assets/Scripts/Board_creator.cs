@@ -14,6 +14,7 @@ public class Board_creator : MonoBehaviour
 
     void Start()
     {
+        PlayerPrefs.SetInt("mistake", 0);
         BoardInit(Board);
         //ShuffleList(numbers);
         CreateBoard();
@@ -257,16 +258,30 @@ public void OnButtonClicked(int index)
                 Debug.Log("Brawo");
                 buttonText.text = (Board[index % 9, index / 9]).ToString();
                 BoardButtons[index].interactable = false;
+                IsPuzzleDone();
             }
             else
             {
                 Debug.Log("B³¹d");
+                PlayerPrefs.SetInt("mistake", (PlayerPrefs.GetInt("mistake"+1)));
                 buttonText.text = declared.ToString();
                 BoardButtons[index].image.color = Color.red;
             }
         }
         else
             Debug.Log("nie wybrano numeru");
+    }
+
+    bool IsPuzzleDone() //warunek zwyciêstwa
+    {
+        for (int i = 0; i < BoardButtons.Length; i++)
+        {
+            Button button = BoardButtons[i];
+            if (button.interactable == true)
+                return false;
+        }
+        Debug.Log("Wygra³eœ!!!");
+        return true;
     }
 
 }
