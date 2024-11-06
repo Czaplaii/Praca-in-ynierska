@@ -11,7 +11,6 @@ public class Board_creator : MonoBehaviour
     [SerializeField] List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     private static readonly System.Random rand = new System.Random();
 
-
     void Start()
     {
         PlayerPrefs.SetInt("mistake", 0);
@@ -262,8 +261,9 @@ public void OnButtonClicked(int index)
             }
             else
             {
-                Debug.Log("B³¹d");
-                PlayerPrefs.SetInt("mistake", (PlayerPrefs.GetInt("mistake"+1)));
+                Debug.Log("B³¹d" + PlayerPrefs.GetInt("mistake"));
+                int mistaketemp = PlayerPrefs.GetInt("mistake") + 1;
+                PlayerPrefs.SetInt("mistake", mistaketemp);
                 buttonText.text = declared.ToString();
                 BoardButtons[index].image.color = Color.red;
             }

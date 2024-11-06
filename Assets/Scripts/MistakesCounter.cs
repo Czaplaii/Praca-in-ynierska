@@ -15,7 +15,7 @@ public class MistakesCounter : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //int mistakes = PlayerPrefs.GetInt(mistake);
-        //mistaketext.text = ("B³êdy" + mistakes).ToString();
+        int mistakes = PlayerPrefs.GetInt("mistake");
+        mistaketext.text = ("B³êdy " + mistakes + " / 10").ToString();
     }
 }
