@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1732383240",
+        "python_version": "3.10.2 (tags/v3.10.2:a58ebcc, Jan 17 2022, 14:12:15) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\Kuba\\Documents\\GitHub\\Praca-in-ynierska\\venv\\Scripts\\mlagents-learn C:\\Users\\Kuba\\Documents\\GitHub\\Praca-in-ynierska\\Assets\\ML-Agents\\config\\sudokuconfig.yaml --run-id=run1",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.5.1+cpu",
+        "numpy_version": "1.23.5",
+        "end_time_seconds": "1732383303"
+    },
+    "total": 63.05471979995491,
+    "count": 1,
+    "self": 0.0060875999624840915,
+    "children": {
+        "run_training.setup": {
+            "total": 0.11135099997045472,
+            "count": 1,
+            "self": 0.11135099997045472
+        },
+        "TrainerController.start_learning": {
+            "total": 62.93728120002197,
+            "count": 1,
+            "self": 0.00012210005661472678,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 62.937140800000634,
+                    "count": 1,
+                    "self": 62.937140800000634
+                },
+                "TrainerController._save_models": {
+                    "total": 1.829996472224593e-05,
+                    "count": 1,
+                    "self": 1.829996472224593e-05
+                }
+            }
+        }
+    }
+}

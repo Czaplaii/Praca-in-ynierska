@@ -205,12 +205,12 @@ public class Board_creator : MonoBehaviour
     void PuzzleMaker() //wersja wstêpna z pokazywaniem komórek na bazie iloœci
     {
         //int showeasy = Random.Range(41, 51); //³atwa plansza
-        int showmedium = Random.Range(31, 41); //œrednia plansza
-        //int showhard = Random.Range(20, 30); //trudna plansza
-        for (int i = 0;i < showmedium; i++)
+        //int showmedium = Random.Range(31, 41); //œrednia plansza
+        int showhard = Random.Range(20, 30); //trudna plansza
+        for (int i = 0;i < showhard; i++)
         {
             int k = Random.Range(0,81);
-            Debug.Log(showmedium);
+            Debug.Log(showhard);
             TMP_Text buttonText = BoardButtons[k].GetComponentInChildren<TMP_Text>();
             if (buttonText.text == " ")
             {
@@ -272,7 +272,7 @@ public void OnButtonClicked(int index)
             Debug.Log("nie wybrano numeru");
     }
 
-    bool IsPuzzleDone() //warunek zwyciêstwa
+    public bool IsPuzzleDone() //warunek zwyciêstwa
     {
         for (int i = 0; i < BoardButtons.Length; i++)
         {
@@ -283,5 +283,22 @@ public void OnButtonClicked(int index)
         Debug.Log("Wygra³eœ!!!");
         return true;
     }
+
+    public int[,] GetBoard()
+    {
+        return Board;
+    }
+
+    public bool MakeMove(int row, int col, int number)
+    {
+        if (Board[row, col] == 0 && !IsInRow(row, number) && !IsInColumn(col, number) && !IsInSector(row, col, number))
+        {
+            Board[row, col] = number;
+            Przypisz(row, col, number); // Aktualizuj UI
+            return true; // Ruch poprawny
+        }
+        return false; // Ruch niepoprawny
+    }
+
 
 }
