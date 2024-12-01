@@ -30,4 +30,9 @@ public class banner_bar : MonoBehaviour
         Buttons[index].interactable = false;
         PlayerPrefs.SetInt("number", index);
     }
+
+    public Button[] GetIntensionButtons() //przekazujemy tablicê agentowi
+    {
+        return Buttons;
+    }
 }
