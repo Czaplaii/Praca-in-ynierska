@@ -10,69 +10,64 @@ public class SudokuAgent : Agent
 {
     public int[,] Board = new int[9, 9]; // Pe³ne rozwi¹zanie sudoku (ukryte przed AI)
     private int[,] playerBoard = new int[9, 9]; // Plansza gracza (to widzi i modyfikuje AI)
-    private Board_creator board;
-    private banner_bar bar;
-    private Button[] buttons, intension;
+    private Board_creator board; //odnoœnik do skryptu
+    private banner_bar bar; //odnoœnik do skryptu
+    private Button[] buttons, intension; //odnoœnik do skryptu
     private int episodeCount = 0,Actions=0, Streak =0; // Licznik epizodów
-    int number = -1;
+    int number = -1; //numer którym agent operuje na swojej tablicy
+    private HashSet<string> invalidMoves = new HashSet<string>();
 
+    void Awake()
+    {
+        Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+    }
 
-
+    //Inicjalizacja zachowañ agenta
     public override void Initialize()
     {
-        board = FindObjectOfType<Board_creator>();
-        bar = FindObjectOfType<banner_bar>();
-        playerBoard = board.GetBoard();
-        Board = board.GetTrueBoard();
-        buttons = board.GetButtons();
-        intension = bar.GetIntensionButtons();
+        board = FindObjectOfType<Board_creator>(); //przypisanie obiektu ze skryptem
+        bar = FindObjectOfType<banner_bar>(); //przypisanie obiektu ze skryptem
+        playerBoard = board.GetBoard(); //przepisz tablicê zagadki agentowi
+        Board = board.GetTrueBoard(); //przepisz rozwi¹zanie do porównania przez agenta
+        buttons = board.GetButtons(); //przepisz guziki na planszy do invoke
+        intension = bar.GetIntensionButtons(); //przepisz guziki numerów do invoke
     }
 
-
+    //po rozpoczêciu 1 sesji sudoku(nowa mapa)
     public override void OnEpisodeBegin()
     {
-        episodeCount++;
+        episodeCount++; //do wyœwietlania epizodów
         if (episodeCount != 1)
         {
-            board.ResetGame();
+            board.ResetGame(); //jeœli to kolejny epizod, zresetuj planszê(unikamy resetowania wygenerowanej planszy na poczatku)
         }
-        playerBoard = board.GetBoard();
-        Board = board.GetTrueBoard();
-        ShowPlayerBoard();
-        ShowTruePlayerBoard();
+        playerBoard = board.GetBoard(); //przypisujemy tablicê agenta
+        Board = board.GetTrueBoard(); //przypisujemy pe³ne rozwi¹zanie do porównañ
+        invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
+        ShowPlayerBoard(); // do debugowania
+        ShowTruePlayerBoard(); //do debugowania
 
     }
 
-    /*public override void OnEpisodeEnd()
-    {
-        // Rejestruj liczbê poprawnych odpowiedzi
-        Academy.Instance.StatsRecorder.Add("CorrectActions", correctActions);
 
-        // Rejestruj liczbê b³êdnych odpowiedzi
-        Academy.Instance.StatsRecorder.Add("Errors", incorrectActions);
-
-        // Debugowanie w konsoli
-        Debug.Log($"Epizod zakoñczony: CorrectMoves = {correctActions}, Errors = {incorrectActions}");
-
-        // Zapisz liczbê epizodów do statystyk w Unity (opcjonalne)
-        Academy.Instance.StatsRecorder.Add("episodes", episodeCount);
-        // Wyœwietl liczbê zakoñczonych epizodów (dla debugowania)
-        Debug.Log($"Epizod {episodeCount} rozpoczêty.");
-
-        // Resetowanie zmiennych na nowy epizod
-        correctActions = 0;
-        incorrectActions = 0;
-    }*/
-
-
+    //na co agent ma zwracaæ uwagê
     public override void CollectObservations(VectorSensor sensor)
     {
+        int emptyFields = 0;
         // Przekazuj planszê gracza jako obserwacje (0 = puste pole, 1-9 = liczby)
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
             {
                 sensor.AddObservation(playerBoard[i, j]);
+                /*
+                for (int num = 1; num <= 9; num++)
+                {
+                    bool isValid = IsMoveValid(i, j, num);
+                    sensor.AddObservation(isValid ? 1 : 0);
+                }*/
+                //if (playerBoard[i, j] == 0) emptyFields++; //ile mamy pustych pól
+                //sensor.AddObservation(emptyFields / 81.0f);
             }
         }
     }
@@ -81,52 +76,68 @@ public class SudokuAgent : Agent
     {
         // Akcja AI: wybór pola i liczby
         int fieldIndex = actions.DiscreteActions[0]; // Pole do modyfikacji (0-80)
-        number = actions.DiscreteActions[1]; // Liczba do wstawienia (1-9)
-        bool didMove = false;
-
-        int row = fieldIndex % 9;
+        number = actions.DiscreteActions[1]; // Liczba do wstawienia (0-8)
+        bool didMove = false; //sprawdzamy czy agent nie odpuœci³ tury
+        //Debug.Log("Wybrany number: " + number);
+        int row = fieldIndex % 9; 
         int col = fieldIndex / 9;
-        Actions++;
-        Debug.Log("Iloœæ akcji: " + Actions);
+        Actions++; //w cmd odpowiednik Step
+        string moveKey = $"{row},{col},{number}";
+        //Debug.Log("Iloœæ akcji: " + Actions);
         // Jeœli pole jest puste, pozwól na ruch
         if (playerBoard[row, col] == 0)
         {
-            Debug.Log("Playerboard response : "+row + col + playerBoard[row, col]);
+            //Debug.Log("Playerboard response : "+row + col + playerBoard[row, col]);
             if (intension[number].interactable)  // 'intension' to przyciski z banner_bar
             {
                 intension[number].onClick.Invoke();
-                number++;
                 AddReward(0.1f);
-
-                if (IsMoveValid(row, col, number))
+                didMove = true;
+                //Debug.Log("Intension number: " + number);
+            }
+            number++;
+            //Debug.Log("IsMoveValid number: " + number);
+            if (IsMoveValid(row, col, number)) //czy ruch agenta jest zgodny z zasadami
+            {
+                buttons[fieldIndex].onClick.Invoke();
+                playerBoard[row, col] = number; // Wstaw liczbê
+                AddReward(4.0f+(0.5f*Streak)); // Nagroda za poprawny ruch
+                if (Streak <= 5) 
                 {
-                    buttons[fieldIndex].onClick.Invoke();
-                    playerBoard[row, col] = number; // Wstaw liczbê
-                    AddReward(4.0f+(0.5f*Streak)); // Nagroda za poprawny ruch
-                    //Debug.Log($"Agent poprawnie oznaczy³ liczbê {number},field at field {buttons[fieldIndex]} (row: {row}, col: {col}).");
-                    if (Streak <= 5)
+                    Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
+                }
+                didMove = true; 
+                playerBoard = board.GetBoard();
+                List<string> toRemove = new List<string>();
+                foreach (var key in invalidMoves)
+                {
+                    if (key.StartsWith($"{row},{col},")) // Jeœli b³¹d dotyczy wype³nionego pola
                     {
-                        Streak++;
+                        toRemove.Add(key);
                     }
-                    didMove = true;
-                    playerBoard = board.GetBoard();
-                    Debug.Log("Agent poprawnie oznaczy³ liczbê");
-                    ShowPlayerBoard();
+                }
+                foreach (var key in toRemove)
+                {
+                    invalidMoves.Remove(key);
+                }
+                Debug.Log("Agent poprawnie oznaczy³ liczbê" +number + " w "+ row + col);
+                ShowPlayerBoard();
+            }
+            else
+            {
+                buttons[fieldIndex].onClick.Invoke();
+                if (invalidMoves.Contains(moveKey))
+                {
+                    AddReward(-1.5f); // Kara za powtórzenie b³êdnego ruchu
                 }
                 else
                 {
-                    buttons[fieldIndex].onClick.Invoke();
-                    AddReward(-1.0f); // Kara za b³êdny ruch
-                    Streak = 0;
-                    //Debug.Log($"Agent b³êdnie oznaczy³ liczbê {number} at field {buttons[fieldIndex]} (row: {row}, col: {col}).");
-                    Debug.Log("Agent niepoprawnie oznaczy³ liczbê");
-                    didMove = true;
+                    invalidMoves.Add(moveKey); // Zapisz b³êdny ruch
+                    AddReward(-1.0f); // Kara za nowy b³êdny ruch
                 }
-            }
-            else
-            { 
-                AddReward(-1f); // Kara za próbê wybrania nieaktywnego przycisku
-                Debug.Log($"Agent próbowa³ wybraæ nieaktywn¹ liczbê.");
+                Streak = 0;
+                //Debug.Log($"Agent b³êdnie oznaczy³ liczbê {number} at field {buttons[fieldIndex]} (row: {row}, col: {col}).");
+                Debug.Log("Agent niepoprawnie oznaczy³ liczbê");
                 didMove = true;
             }
         }
@@ -154,7 +165,7 @@ public class SudokuAgent : Agent
 
     }
 
-    private bool IsMoveValid(int row, int col, int number)
+    private bool IsMoveValid(int row, int col, int number) //sprawdzamy czy ruch jest poprawny
     {
         //Debug.Log("IsInRow: " + board.IsInRow(row, number - 1, Board));
         //Debug.Log("IsInColumn: " + board.IsInColumn(col, number - 1, Board));
@@ -165,29 +176,28 @@ public class SudokuAgent : Agent
             return false;
     }
 
-    private bool IsPuzzleSolved()
+    private bool IsPuzzleSolved() //sprawdzamy czy agent ukoñczy³ planszê
     {
         // SprawdŸ, czy wszystkie pola s¹ wype³nione poprawnie
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
             {
-                if (playerBoard[i, j] == 0 || !IsMoveValid(i, j, playerBoard[i, j]))
+                if (playerBoard[i, j] == 0)
                     return false;
             }
         }
-
         return true;
     }
 
 
-    public override void Heuristic(in ActionBuffers actionsOut)
+    public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
     {
        
     }
 
 
-    ///debug
+    ///debugowanie- poka¿ plansze gracza i poka¿ uzupe³nione sudoku
     void ShowTruePlayerBoard()
     {
         string boardRepresentation2 = ""; // Przechowuje reprezentacjê planszy jako tekst

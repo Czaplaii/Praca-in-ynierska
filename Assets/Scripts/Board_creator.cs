@@ -195,7 +195,7 @@ public class Board_creator : MonoBehaviour
         {
 
             int k = rand.Next(0,81);
-            Debug.Log("wylosowano : " + show);
+            //Debug.Log("wylosowano : " + show);
             TMP_Text buttonText = BoardButtons[k].GetComponentInChildren<TMP_Text>();
             if (buttonText.text == " ")
             {
