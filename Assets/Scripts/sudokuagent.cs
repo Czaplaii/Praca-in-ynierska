@@ -17,6 +17,7 @@ public class SudokuAgent : Agent
     private int episodeCount = 0,Actions=0, Streak =0; // Licznik epizodów
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
+    //private IDiscreteActionMask actionMask; maskowanie
 
     void Awake()
     {
@@ -32,6 +33,7 @@ public class SudokuAgent : Agent
         Board = board.GetTrueBoard(); //przepisz rozwi¹zanie do porównania przez agenta
         buttons = board.GetButtons(); //przepisz guziki na planszy do invoke
         intension = bar.GetIntensionButtons(); //przepisz guziki numerów do invoke
+        //actionMask = GetComponent<IDiscreteActionMask>(); maskowanie
     }
 
     //po rozpoczêciu 1 sesji sudoku(nowa mapa)
