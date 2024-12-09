@@ -1,0 +1,65 @@
+{
+    "SudokuAgent": {
+        "checkpoints": [
+            {
+                "steps": 1499964,
+                "file_path": "results\\newagent2\\SudokuAgent\\SudokuAgent-1499964.onnx",
+                "reward": -72.54412122333751,
+                "creation_time": 1733513501.9903758,
+                "auxillary_file_paths": [
+                    "results\\newagent2\\SudokuAgent\\SudokuAgent-1499964.pt"
+                ]
+            },
+            {
+                "steps": 1999964,
+                "file_path": "results\\newagent2\\SudokuAgent\\SudokuAgent-1999964.onnx",
+                "reward": -62.20937753189355,
+                "creation_time": 1733516338.070432,
+                "auxillary_file_paths": [
+                    "results\\newagent2\\SudokuAgent\\SudokuAgent-1999964.pt"
+                ]
+            },
+            {
+                "steps": 2499964,
+                "file_path": "results\\newagent2\\SudokuAgent\\SudokuAgent-2499964.onnx",
+                "reward": -70.88666950861612,
+                "creation_time": 1733519190.7187164,
+                "auxillary_file_paths": [
+                    "results\\newagent2\\SudokuAgent\\SudokuAgent-2499964.pt"
+                ]
+            },
+            {
+                "steps": 2999964,
+                "file_path": "results\\newagent2\\SudokuAgent\\SudokuAgent-2999964.onnx",
+                "reward": -58.23571693897247,
+                "creation_time": 1733522030.0942597,
+                "auxillary_file_paths": [
+                    "results\\newagent2\\SudokuAgent\\SudokuAgent-2999964.pt"
+                ]
+            },
+            {
+                "steps": 3127464,
+                "file_path": "results\\newagent2\\SudokuAgent\\SudokuAgent-3127464.onnx",
+                "reward": -57.15937766432762,
+                "creation_time": 1733522754.8891554,
+                "auxillary_file_paths": [
+                    "results\\newagent2\\SudokuAgent\\SudokuAgent-3127464.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 3127464,
+            "file_path": "results\\newagent2\\SudokuAgent.onnx",
+            "reward": -57.15937766432762,
+            "creation_time": 1733522754.8891554,
+            "auxillary_file_paths": [
+                "results\\newagent2\\SudokuAgent\\SudokuAgent-3127464.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.5.1+cpu"
+    }
+}

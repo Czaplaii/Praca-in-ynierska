@@ -5,6 +5,7 @@ using Unity.MLAgents.Actuators;
 using UnityEngine.UI;
 using Unity.VisualScripting;
 using System.Collections.Generic;
+using Unity.Barracuda;
 
 public class SudokuAgent : Agent
 {
@@ -60,15 +61,23 @@ public class SudokuAgent : Agent
             for (int j = 0; j < 9; j++)
             {
                 sensor.AddObservation(playerBoard[i, j]);
-                /*
-                for (int num = 1; num <= 9; num++)
-                {
-                    bool isValid = IsMoveValid(i, j, num);
-                    sensor.AddObservation(isValid ? 1 : 0);
-                }*/
-                //if (playerBoard[i, j] == 0) emptyFields++; //ile mamy pustych pól
-                //sensor.AddObservation(emptyFields / 81.0f);
+                if (playerBoard[i, j] == 0) 
+                emptyFields++; //ile mamy pustych pól
             }
+        }
+        sensor.AddObservation(emptyFields);
+
+        for (int i = 0; i < 9; i++)
+        {
+            int rowSum = 0;
+            int colSum = 0;
+            for (int j = 0; j < 9; j++)
+            {
+                rowSum += playerBoard[i, j];  // Suma wiersza
+                colSum += playerBoard[j, i];  // Suma kolumny
+            }
+            sensor.AddObservation(rowSum);
+            sensor.AddObservation(colSum);
         }
     }
 
@@ -82,6 +91,7 @@ public class SudokuAgent : Agent
         int row = fieldIndex % 9; 
         int col = fieldIndex / 9;
         Actions++; //w cmd odpowiednik Step
+
         string moveKey = $"{row},{col},{number}";
         //Debug.Log("Iloœæ akcji: " + Actions);
         // Jeœli pole jest puste, pozwól na ruch
@@ -106,52 +116,57 @@ public class SudokuAgent : Agent
                 {
                     Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
                 }
+                if (IsColFull(row))
+                {
+                    Debug.Log("Kolumna jest pe³na");
+                    AddReward(20f);
+                }
+                if (IsRowFull(col))
+                {
+                    Debug.Log("Pe³ny Rz¹d");
+                    AddReward(20f);
+                }
+                if (IsSectorFull(row, col))
+                {
+                    Debug.Log("Sektor jest skoñczony");
+                    AddReward(20f);
+                }
                 didMove = true; 
                 playerBoard = board.GetBoard();
-                List<string> toRemove = new List<string>();
-                foreach (var key in invalidMoves)
-                {
-                    if (key.StartsWith($"{row},{col},")) // Jeœli b³¹d dotyczy wype³nionego pola
-                    {
-                        toRemove.Add(key);
-                    }
-                }
-                foreach (var key in toRemove)
-                {
-                    invalidMoves.Remove(key);
-                }
+
+                RemoveInvalidMoves(row, col); //funkcja usuwaj¹ca z hashsetu informacje o b³êdach z tej komórki
+
                 Debug.Log("Agent poprawnie oznaczy³ liczbê" +number + " w "+ row + col);
-                ShowPlayerBoard();
+                //ShowPlayerBoard();
             }
             else
             {
                 buttons[fieldIndex].onClick.Invoke();
                 if (invalidMoves.Contains(moveKey))
                 {
-                    AddReward(-1.5f); // Kara za powtórzenie b³êdnego ruchu
+                    AddReward(-2f); // Kara za powtórzenie b³êdnego ruchu
                 }
                 else
                 {
                     invalidMoves.Add(moveKey); // Zapisz b³êdny ruch
-                    AddReward(-1.0f); // Kara za nowy b³êdny ruch
+                    AddReward(-1f); // Kara za nowy b³êdny ruch
                 }
                 Streak = 0;
-                //Debug.Log($"Agent b³êdnie oznaczy³ liczbê {number} at field {buttons[fieldIndex]} (row: {row}, col: {col}).");
-                Debug.Log("Agent niepoprawnie oznaczy³ liczbê");
+                //Debug.Log("Agent niepoprawnie oznaczy³ liczbê, poprawna odpowiedŸ dla" +row + col+" = " + Board[row,col]);
                 didMove = true;
             }
         }
         else
         {
-            Debug.Log($"Agent wybra³ oznaczone pole");
-            AddReward(-2f); // Kara za próbê zmiany zajêtego pola
+            //Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
+            AddReward(-4f); // Kara za próbê zmiany zajêtego pola
             didMove = true;
         }
 
         // SprawdŸ, czy gra zosta³a ukoñczona
         if (IsPuzzleSolved())
         {
-            AddReward(50.0f); // Nagroda za ukoñczenie planszy
+            AddReward(150.0f); // Nagroda za ukoñczenie planszy
             didMove= true;
             EndEpisode();
         }
@@ -159,9 +174,13 @@ public class SudokuAgent : Agent
         // Jeœli agent nie wykona³ ruchu, na³ó¿ dodatkow¹ karê
         if (!didMove)
         {
-            AddReward(-3f); // Kara za brak ruchu
+            AddReward(-5f); // Kara za brak ruchu
         }
-        
+        // Iteracja po elementach
+        foreach (var name in invalidMoves)
+        {
+            Debug.Log("HashSet: " + name);
+        }
 
     }
 
@@ -170,10 +189,19 @@ public class SudokuAgent : Agent
         //Debug.Log("IsInRow: " + board.IsInRow(row, number - 1, Board));
         //Debug.Log("IsInColumn: " + board.IsInColumn(col, number - 1, Board));
         //Debug.Log("IsInSector: " + board.IsInSector(row, col, number - 1, Board));
-        if (board.IsInRow(row, number,Board) ==false && board.IsInColumn(col, number, Board)==false && board.IsInSector(row, col, number, Board) ==false)
+        /*if (board.IsInRow(row, number,Board) ==false && board.IsInColumn(col, number, Board)==false && board.IsInSector(row, col, number, Board) ==false)
             return true;
         else
             return false;
+        */
+        if (Board[row, col] == number)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private bool IsPuzzleSolved() //sprawdzamy czy agent ukoñczy³ planszê
@@ -193,18 +221,131 @@ public class SudokuAgent : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
     {
-       
+        var discreteActions = actionsOut.DiscreteActions;
+        discreteActions[0] = Random.Range(0,8);
+        discreteActions[1] = Random.Range(0,8);
+        // WYPISZ CA£¥ KOLUMNÊ DOBRZE
+        /*
+            var discreteActions = actionsOut.DiscreteActions;
+                for (int j = 0; j < 9; j++)
+                {
+                    if (playerBoard[0, j] == 0)
+                    {
+                        discreteActions[0] = (j*9);
+                        Debug.Log(discreteActions[0]);
+                        discreteActions[1] = (Board[0, j])-1;
+                        Debug.Log(discreteActions[1]);
+                        return; 
+                    }
+                }
+        */
+
+        // WYPISZ CA£Y RZ¥D DOBRZE
+        /*
+            var discreteActions = actionsOut.DiscreteActions;
+                for (int j = 0; j < 9; j++)
+                {
+                    if (playerBoard[j, 0] == 0)
+                    {
+                        discreteActions[0] = (j);
+                        //Debug.Log(discreteActions[0]);
+                        discreteActions[1] = (Board[j, 0])-1;
+                        //Debug.Log(discreteActions[1]);
+                        return; 
+                    }
+                }
+
+        */
+        // WYPISZ CA£Y SEKTOR
+        /*
+        
+        /*
+        int currentSector = 2; // Numer sektora (od 0 do 8)
+        Debug.Log("Heuristic called");
+
+        int sectorColumnStart = (currentSector / 3) * 3;
+        int sectorRowStart = (currentSector % 3) * 3;
+        var discreteActions = actionsOut.DiscreteActions;
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                int row = sectorRowStart + i;
+                int col = sectorColumnStart + j;
+
+                if (playerBoard[row, col] == 0)
+                {
+                    discreteActions[0] = col * 9 + row;
+                    discreteActions[1] = Board[row, col] - 1;
+                    Debug.Log($"Heuristic Action: fieldIndex={discreteActions[0]}, value={discreteActions[1] + 1}");
+                    currentSector = (currentSector + 1) % 9;
+                    return;
+                }
+            }
+        }
+        */
     }
 
+    bool IsColFull(int row)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (playerBoard[row, i] == 0)
+            {
+                Debug.Log("Kolumna jeszcze nie jest skoñczona");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool IsRowFull(int col)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (playerBoard[i, col] == 0)
+            {
+                Debug.Log("Rz¹d nie jest skoñczony");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool IsSectorFull(int row, int col)
+    {
+        int sectorRowStart = (row / 3) * 3;
+        int sectorColumnStart = (col / 3) * 3;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (playerBoard[sectorRowStart + i, sectorColumnStart + j] == 0)
+                {
+                    Debug.Log("Sektor nie jest skoñczony");
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    void RemoveInvalidMoves(int row, int col)
+    {
+        string rowColKey = $"{row},{col},";
+        // Usuwanie wszystkich wpisów pasuj¹cych do wzorca
+        invalidMoves.RemoveWhere(move => move.StartsWith(rowColKey));
+    }
 
     ///debugowanie- poka¿ plansze gracza i poka¿ uzupe³nione sudoku
     void ShowTruePlayerBoard()
     {
         string boardRepresentation2 = ""; // Przechowuje reprezentacjê planszy jako tekst
 
-        for (int i = 0; i< 9; i++)
+        for (int i = 0; i < 9; i++)
         {
-            for (int j = 0; j< 9; j++)
+            for (int j = 0; j < 9; j++)
             {
                 boardRepresentation2 += Board[j, i] + " "; // Dodajemy liczbê i spacjê dla przejrzystoœci
             }

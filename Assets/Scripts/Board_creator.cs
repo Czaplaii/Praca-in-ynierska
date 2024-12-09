@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class Board_creator : MonoBehaviour
 {
@@ -257,19 +258,21 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
                 int mistaketemp = PlayerPrefs.GetInt("mistake") + 1;
                 PlayerPrefs.SetInt("mistake", mistaketemp);
                 buttonText.text = declared.ToString();
-                BoardButtons[index].image.color = new Color(0.992f, 0.286f, 0.286f);
-               // if (PlayerPrefs.GetInt("mistake")>=10)
+                BoardButtons[index].image.color = new Color(0.992f, 0.286f, 0.286f); //czerwony
+                // if (PlayerPrefs.GetInt("mistake")>=10)
                 //ResetGame();
             }
         }
         else
             Debug.Log("nie wybrano numeru");
-        if (IsPuzzleDone())
+        /*if (IsPuzzleDone()) ju¿ niepotrzebne, teraz agent sprawdza warunek
         {
             ResetGame();
         }
+        */ 
     }
 
+    /*
     public bool IsPuzzleDone() //warunek zwyciêstwa
     {
         for (int i = 0; i < BoardButtons.Length; i++)
@@ -283,6 +286,7 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
         PlayerPrefs.SetInt("iter", round);
         return true;
     }
+    */
 
     public void ResetGame() //
     {
