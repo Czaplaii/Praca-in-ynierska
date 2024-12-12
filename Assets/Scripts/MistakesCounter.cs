@@ -16,6 +16,6 @@ public class MistakesCounter : MonoBehaviour
     void Update()
     {
         int mistakes = PlayerPrefs.GetInt("mistake");
-        mistaketext.text = ("B³êdy " + mistakes + " / 10").ToString();
+        mistaketext.text = ("B³êdy " + mistakes).ToString();
     }
 }

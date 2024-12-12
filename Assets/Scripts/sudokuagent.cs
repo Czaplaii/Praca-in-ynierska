@@ -17,7 +17,7 @@ public class SudokuAgent : Agent
     private int episodeCount = 0,Actions=0, Streak =0; // Licznik epizodów
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
-    //private IDiscreteActionMask actionMask; maskowanie
+    private IDiscreteActionMask actionMask; //maskowanie
 
     void Awake()
     {
@@ -34,6 +34,7 @@ public class SudokuAgent : Agent
         buttons = board.GetButtons(); //przepisz guziki na planszy do invoke
         intension = bar.GetIntensionButtons(); //przepisz guziki numerów do invoke
         //actionMask = GetComponent<IDiscreteActionMask>(); maskowanie
+        PlayerPrefs.SetInt("iter", 0);
     }
 
     //po rozpoczêciu 1 sesji sudoku(nowa mapa)
@@ -44,12 +45,37 @@ public class SudokuAgent : Agent
         {
             board.ResetGame(); //jeœli to kolejny epizod, zresetuj planszê(unikamy resetowania wygenerowanej planszy na poczatku)
         }
+        PlayerPrefs.SetInt("iter", episodeCount);
         playerBoard = board.GetBoard(); //przypisujemy tablicê agenta
         Board = board.GetTrueBoard(); //przypisujemy pe³ne rozwi¹zanie do porównañ
         invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
         ShowPlayerBoard(); // do debugowania
         ShowTruePlayerBoard(); //do debugowania
 
+    }
+
+    public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
+    {
+        string debugLog = "Maskowanie:\n"; // Pocz¹tek loga z opisem
+        for (int col = 0; col < 9; col++)
+        {
+            for (int row = 0; row < 9; row++)
+            {
+                int index = col * 9 + row;
+
+                if (playerBoard[row, col] != 0) // Komórka zajêta
+                {
+                    actionMask.SetActionEnabled(0, index, false);
+                    debugLog += "1 "; // Zablokowana komórka
+                }
+                else
+                {
+                    debugLog += "0 "; // Wolna komórka
+                }
+            }
+            debugLog += "\n"; // Nowa linia dla nastêpnego wiersza
+        }
+        Debug.Log(debugLog);
     }
 
 
@@ -80,6 +106,26 @@ public class SudokuAgent : Agent
             }
             sensor.AddObservation(rowSum);
             sensor.AddObservation(colSum);
+        }
+
+        for (int sectorCol = 0; sectorCol < 3; sectorCol++) // Iteracja przez 3 sektory w pionie
+        {
+            for (int sectorRow = 0; sectorRow < 3; sectorRow++) // Iteracja przez 3 sektory w poziomie
+            {
+                int sectorSum = 0;
+
+                // Oblicz sumê dla bie¿¹cego sektora 3x3
+                for (int i = 0; i < 3; i++)  // Przechodzimy przez 3 wiersze w obrêbie sektora
+                {
+                    for (int j = 0; j < 3; j++)  // Przechodzimy przez 3 kolumny w obrêbie sektora
+                    {
+                        int row = sectorRow * 3 + i;  // Indeks wiersza w ca³ej planszy
+                        int col = sectorCol * 3 + j;  // Indeks kolumny w ca³ej planszy
+                        sectorSum += playerBoard[row, col];  // Dodajemy wartoœæ do sumy sektora
+                    }
+                }
+                sensor.AddObservation(sectorSum); // Dodajemy sumê sektora jako obserwacjê
+            }
         }
     }
 
@@ -160,7 +206,7 @@ public class SudokuAgent : Agent
         }
         else
         {
-            //Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
+            Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
             AddReward(-4f); // Kara za próbê zmiany zajêtego pola
             didMove = true;
         }
@@ -179,11 +225,10 @@ public class SudokuAgent : Agent
             AddReward(-5f); // Kara za brak ruchu
         }
         // Iteracja po elementach
-        foreach (var name in invalidMoves)
+        /*foreach (var name in invalidMoves)
         {
             Debug.Log("HashSet: " + name);
-        }
-
+        }*/
     }
 
     private bool IsMoveValid(int row, int col, int number) //sprawdzamy czy ruch jest poprawny
@@ -223,10 +268,14 @@ public class SudokuAgent : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
     {
+        //losowe liczby
+        /*
         var discreteActions = actionsOut.DiscreteActions;
         discreteActions[0] = Random.Range(0,8);
         discreteActions[1] = Random.Range(0,8);
+        */
         // WYPISZ CA£¥ KOLUMNÊ DOBRZE
+        
         /*
             var discreteActions = actionsOut.DiscreteActions;
                 for (int j = 0; j < 9; j++)
@@ -260,8 +309,6 @@ public class SudokuAgent : Agent
         */
         // WYPISZ CA£Y SEKTOR
         /*
-        
-        /*
         int currentSector = 2; // Numer sektora (od 0 do 8)
         Debug.Log("Heuristic called");
 
@@ -285,9 +332,9 @@ public class SudokuAgent : Agent
                 }
             }
         }
+
         */
     }
-
     bool IsColFull(int row)
     {
         for (int i = 0; i < 9; i++)

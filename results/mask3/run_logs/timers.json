@@ -1,0 +1,47 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1733945910",
+        "python_version": "3.10.2 (tags/v3.10.2:a58ebcc, Jan 17 2022, 14:12:15) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\Kuba\\AppData\\Local\\Programs\\Python\\Python310\\Scripts\\mlagents-learn config2.yaml --run-id=mask3",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.5.1+cpu",
+        "numpy_version": "1.23.5",
+        "end_time_seconds": "1733945922"
+    },
+    "total": 11.636597400065511,
+    "count": 1,
+    "self": 10.006426900159568,
+    "children": {
+        "run_training.setup": {
+            "total": 0.10127999994438142,
+            "count": 1,
+            "self": 0.10127999994438142
+        },
+        "TrainerController.start_learning": {
+            "total": 1.5288904999615625,
+            "count": 1,
+            "self": 0.0017056998331099749,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 1.5271704000188038,
+                    "count": 1,
+                    "self": 1.5271704000188038
+                },
+                "trainer_threads": {
+                    "total": 7.00005330145359e-07,
+                    "count": 1,
+                    "self": 7.00005330145359e-07
+                },
+                "TrainerController._save_models": {
+                    "total": 1.370010431855917e-05,
+                    "count": 1,
+                    "self": 1.370010431855917e-05
+                }
+            }
+        }
+    }
+}

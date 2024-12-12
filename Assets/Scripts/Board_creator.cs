@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -12,26 +13,27 @@ public class Board_creator : MonoBehaviour
     [SerializeField] List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // lista numerów do wyboru
     [SerializeField] private int seed; // ziarno do œledzenia konkretnego losowania
     private System.Random rand; // losowanie
-    int round = 0; // obecna runda
     [SerializeField, Range(1, 3)] private int difficulty; // poziom trudnoœci
     private clock clockreset; // odniesienie do clock
     public SudokuAgent sudokuAgent;
+    [SerializeField] TMP_Text seedtext;
 
     void Start()
     {
         clockreset = FindObjectOfType<clock>();//szukamy obiektu ze skryptem clock
         if (seed == -1) //sprawdzamy czy generowaæ nowy seed, czy mamy sprecyzowany
         {
-            seed = System.DateTime.Now.Millisecond; // Losowy seed
+            seed = (int)(System.DateTime.Now.Ticks / 10000); // Losowy seed
+            seed = Math.Abs(seed);
         }
         rand = new System.Random(seed); //RNG na bazie seed
-        Debug.Log("Using Seed: " + seed); // wyœwietl w konsoli który seed u¿ywamy
         PlayerPrefs.SetInt("mistake", 0); //reset b³êdów
         PlayerPrefs.SetInt("iter", 0); //reset rund
         BoardInit(Board);// wype³niamy tablicê zerami
         CreateBoard(); //wype³niamy tablicê guzików i mieszamy numery
         DefineButtons();
         PuzzleMaker();
+        seedtext.text = ("Seed: " +seed).ToString();
         //ShowPlayerBoard();
     }
 
@@ -292,7 +294,9 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
     {
         // Resetuj planszê (tablicê Board)
         BoardInit(Board);
-
+        seed = (int)(System.DateTime.Now.Ticks / 10000); // Losowy seed
+        seed = Math.Abs(seed);
+        rand = new System.Random(seed); //RNG na bazie seed
         // Przywróæ stan przycisków
         for (int i = 0; i < BoardButtons.Length; i++)
         {
@@ -313,6 +317,7 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
         // reset parametrów
         PlayerPrefs.SetInt("mistake", 0);
         clockreset.ResetTime();
+        seedtext.text = ("Seed: " + seed).ToString();
         Debug.Log("Gra zosta³a zresetowana.");
         Debug.Log("Plansza po resecie:");
         ShowPlayerBoard();
