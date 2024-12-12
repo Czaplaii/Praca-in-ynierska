@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using Unity.Barracuda;
+using System;
 
 public class SudokuAgent : Agent
 {
@@ -57,6 +58,7 @@ public class SudokuAgent : Agent
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
         string debugLog = "Maskowanie:\n"; // Pocz¹tek loga z opisem
+        int[] numberCounts = new int[9]; // Tablica do zliczania wyst¹pieñ ka¿dej liczby
         for (int col = 0; col < 9; col++)
         {
             for (int row = 0; row < 9; row++)
@@ -65,8 +67,10 @@ public class SudokuAgent : Agent
 
                 if (playerBoard[row, col] != 0) // Komórka zajêta
                 {
-                    actionMask.SetActionEnabled(0, index, false);
+                    actionMask.SetActionEnabled(0, index, false); //maskowanie liczb
                     debugLog += "1 "; // Zablokowana komórka
+                    int value = playerBoard[row, col]; //przypisz wyst¹pienie
+                    numberCounts[value - 1]++; //inkrementuj wyst¹pienie danej liczby
                 }
                 else
                 {
@@ -76,6 +80,18 @@ public class SudokuAgent : Agent
             debugLog += "\n"; // Nowa linia dla nastêpnego wiersza
         }
         Debug.Log(debugLog);
+
+        string debug2 = "Zliczanie liczb:\n";
+        for (int i = 0; i < numberCounts.Length; i++)
+        {
+            debug2 += $"Liczba {i + 1}: {numberCounts[i]}\n";
+            if(numberCounts[i] >= 9) //jeœli dana liczba wyst¹pi 9 razy w tablicy
+            {
+                actionMask.SetActionEnabled(1, i, false); //zamaskuj t¹ liczbê przed agentem
+            }
+        }
+        Debug.Log(debug2);
+
     }
 
 
