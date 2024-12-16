@@ -6,7 +6,6 @@ using UnityEngine.UI;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using Unity.Barracuda;
-using System;
 
 public class SudokuAgent : Agent
 {
@@ -23,6 +22,7 @@ public class SudokuAgent : Agent
     void Awake()
     {
         Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+        //Time.timeScale = 0.01f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
@@ -34,7 +34,6 @@ public class SudokuAgent : Agent
         Board = board.GetTrueBoard(); //przepisz rozwi¹zanie do porównania przez agenta
         buttons = board.GetButtons(); //przepisz guziki na planszy do invoke
         intension = bar.GetIntensionButtons(); //przepisz guziki numerów do invoke
-        //actionMask = GetComponent<IDiscreteActionMask>(); maskowanie
         PlayerPrefs.SetInt("iter", 0);
     }
 
@@ -175,7 +174,7 @@ public class SudokuAgent : Agent
             {
                 buttons[fieldIndex].onClick.Invoke();
                 playerBoard[row, col] = number; // Wstaw liczbê
-                AddReward(4.0f+(0.5f*Streak)); // Nagroda za poprawny ruch
+                AddReward(10.0f+(1f*Streak)); // Nagroda za poprawny ruch
                 if (Streak <= 5) 
                 {
                     Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
@@ -205,15 +204,20 @@ public class SudokuAgent : Agent
             }
             else
             {
+                if (ObviousMistake(row, col, number, playerBoard))
+                {
+                    Debug.Log("Liczba wyst¹pi³a w wierszu, sektorze lub kolumnie");
+                    AddReward(-5f); // Kara za oczywisty b³¹d
+                }
                 buttons[fieldIndex].onClick.Invoke();
                 if (invalidMoves.Contains(moveKey))
                 {
-                    AddReward(-2f); // Kara za powtórzenie b³êdnego ruchu
+                        AddReward(-2f);
                 }
                 else
                 {
                     invalidMoves.Add(moveKey); // Zapisz b³êdny ruch
-                    AddReward(-1f); // Kara za nowy b³êdny ruch
+                        AddReward(-1f);
                 }
                 Streak = 0;
                 //Debug.Log("Agent niepoprawnie oznaczy³ liczbê, poprawna odpowiedŸ dla" +row + col+" = " + Board[row,col]);
@@ -287,7 +291,7 @@ public class SudokuAgent : Agent
         //losowe liczby
         /*
         var discreteActions = actionsOut.DiscreteActions;
-        discreteActions[0] = Random.Range(0,8);
+        discreteActions[0] = Random.Range(0,81);
         discreteActions[1] = Random.Range(0,8);
         */
         // WYPISZ CA£¥ KOLUMNÊ DOBRZE
@@ -401,6 +405,21 @@ public class SudokuAgent : Agent
         string rowColKey = $"{row},{col},";
         // Usuwanie wszystkich wpisów pasuj¹cych do wzorca
         invalidMoves.RemoveWhere(move => move.StartsWith(rowColKey));
+    }
+
+    bool ObviousMistake(int row,int col,int number, int[,] tab) //funkcja nak³adaj¹ca dodatkow¹ karê, jeœli liczba wyst¹pi³a w wierszu, kolumnie, sektorze
+    {
+        if (board.IsInRow(row, number, tab) || board.IsInColumn(col, number, tab) || board.IsInSector(row, col, number, tab))
+        {
+            Debug.Log("IsInRow: " + board.IsInRow(row, number, tab));
+            Debug.Log("IsInColumn: " + board.IsInColumn(col, number, tab));
+            Debug.Log("IsInSector: " + board.IsInSector(row,col, number, tab));
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     ///debugowanie- poka¿ plansze gracza i poka¿ uzupe³nione sudoku
