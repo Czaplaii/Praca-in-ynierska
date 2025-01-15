@@ -41,11 +41,17 @@ public class SudokuAgent : Agent
     public override void OnEpisodeBegin()
     {
         episodeCount++; //do wyœwietlania epizodów
-        if (episodeCount != 1)
+        PlayerPrefs.SetInt("iter", episodeCount);
+        if (episodeCount == 2)
+        {
+            board.ChangeMode();
+            board.ResetGame();
+
+        }
+        else if (episodeCount > 2)
         {
             board.ResetGame(); //jeœli to kolejny epizod, zresetuj planszê(unikamy resetowania wygenerowanej planszy na poczatku)
-        }
-        PlayerPrefs.SetInt("iter", episodeCount);
+        } 
         playerBoard = board.GetBoard(); //przypisujemy tablicê agenta
         Board = board.GetTrueBoard(); //przypisujemy pe³ne rozwi¹zanie do porównañ
         invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy

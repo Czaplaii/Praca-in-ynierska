@@ -1,0 +1,29 @@
+{
+    "SudokuAgent": {
+        "checkpoints": [
+            {
+                "steps": 4200,
+                "file_path": "results\\testcustom1\\SudokuAgent\\SudokuAgent-4200.onnx",
+                "reward": -389.8357260567801,
+                "creation_time": 1736956622.9112222,
+                "auxillary_file_paths": [
+                    "results\\testcustom1\\SudokuAgent\\SudokuAgent-4200.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 4200,
+            "file_path": "results\\testcustom1\\SudokuAgent.onnx",
+            "reward": -389.8357260567801,
+            "creation_time": 1736956622.9112222,
+            "auxillary_file_paths": [
+                "results\\testcustom1\\SudokuAgent\\SudokuAgent-4200.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.5.1+cpu"
+    }
+}

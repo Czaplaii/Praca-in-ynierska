@@ -5,6 +5,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using static UnityEngine.GraphicsBuffer;
+using UnityEditor;
+using Google.Protobuf.WellKnownTypes;
 
 public class Board_creator : MonoBehaviour
 {
@@ -16,25 +19,50 @@ public class Board_creator : MonoBehaviour
     [SerializeField, Range(1, 3)] private int difficulty; // poziom trudnoœci
     private clock clockreset; // odniesienie do clock
     public SudokuAgent sudokuAgent;
+    [Header("Randomized Puzzle Settings")]
     [SerializeField] TMP_Text seedtext;
+    [SerializeField, Range(1,2)] int mode;
+
 
     void Start()
     {
-        clockreset = FindObjectOfType<clock>();//szukamy obiektu ze skryptem clock
-        if (seed == -1) //sprawdzamy czy generowaæ nowy seed, czy mamy sprecyzowany
+        if (mode == 1)
         {
-            seed = (int)(System.DateTime.Now.Ticks / 10000); // Losowy seed
-            seed = Math.Abs(seed);
+            clockreset = FindObjectOfType<clock>();//szukamy obiektu ze skryptem clock
+            if (seed == -1) //sprawdzamy czy generowaæ nowy seed, czy mamy sprecyzowany
+            {
+                seed = (int)(System.DateTime.Now.Ticks / 10000); // Losowy seed
+                seed = Math.Abs(seed);
+            }
+            rand = new System.Random(seed); //RNG na bazie seed
+            PlayerPrefs.SetInt("mistake", 0); //reset b³êdów
+            PlayerPrefs.SetInt("iter", 0); //reset rund
+            BoardInit(Board);// wype³niamy tablicê zerami
+            CreateBoard(); //wype³niamy tablicê guzików i mieszamy numery
+            DefineButtons();
+            PuzzleMaker();
+            seedtext.text = ("Seed: " + seed).ToString();
+            //ShowPlayerBoard();
         }
-        rand = new System.Random(seed); //RNG na bazie seed
-        PlayerPrefs.SetInt("mistake", 0); //reset b³êdów
-        PlayerPrefs.SetInt("iter", 0); //reset rund
-        BoardInit(Board);// wype³niamy tablicê zerami
-        CreateBoard(); //wype³niamy tablicê guzików i mieszamy numery
-        DefineButtons();
-        PuzzleMaker();
-        seedtext.text = ("Seed: " +seed).ToString();
-        //ShowPlayerBoard();
+        else
+        {
+            PlayerPrefs.SetInt("mistake", 0); //reset b³êdów
+            PlayerPrefs.SetInt("iter", 0); //reset rund
+            HorizontalArrayExample array = GetComponent<HorizontalArrayExample>();
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Board[i, j] = array.GetSudokuValue(i, j);
+                    PlayerBoard[i, j] = array.GetPuzzleValue(i, j);
+                    Przypisz(j, i, PlayerBoard[i, j]);
+                }
+            }
+            ShowPlayerBoard();
+            ShowTruePlayerBoard();
+            DefineButtons();
+            StartButtonDeactivate();
+        }
     }
 
 
@@ -161,7 +189,7 @@ public class Board_creator : MonoBehaviour
         }
     }
 
-    bool IsBoardFull() //czy zainicjowany tablicê
+    bool IsBoardFull() //czy zainicjowano tablicê
     {
         for (int i = 0; i < Board.GetLength(0); i++)
         {
@@ -373,5 +401,10 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
         }
 
         Debug.Log(boardRepresentation2); // Wypisujemy ca³¹ planszê jako tekst
+    }
+
+    public void ChangeMode()
+    {
+        mode = 1;
     }
 }
