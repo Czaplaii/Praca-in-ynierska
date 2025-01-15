@@ -1,0 +1,44 @@
+Mono path[0] = 'E:/github/GitHub/Praca-inzynierska/build/Praca Inżynierska_Data/Managed'
+Mono config path = 'E:/github/GitHub/Praca-inzynierska/build/MonoBleedingEdge/etc'
+[Physics::Module] Initialized MultithreadedJobDispatcher with 11 workers.
+Initialize engine version: 2022.3.21f1 (bf09ca542b87)
+[Subsystems] Discovering subsystems at path E:/github/GitHub/Praca-inzynierska/build/Praca Inżynierska_Data/UnitySubsystems
+Forcing GfxDevice: Null
+GfxDevice: creating device client; threaded=0; jobified=0
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.248 seconds
+- Finished resetting the current domain, in  0.002 seconds
+ERROR: Shader Sprites/Default shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+Microsoft Media Foundation video decoding to texture disabled: graphics device is Null, only Direct3D 11 and Direct3D 12 (only on desktop) are supported for hardware-accelerated video decoding.
+ERROR: Shader Sprites/Mask shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader GUI/Text Shader shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader Legacy Shaders/VertexLit shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+WARNING: Shader Unsupported: 'Standard' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+ERROR: Shader Standard shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+WARNING: Shader Unsupported: 'Standard' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+ERROR: Shader TextMeshPro/Mobile/Distance Field shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+UnloadTime: 5.368700 ms
+Unexpected exception when trying to initialize communication: System.IO.IOException: Error loading native library "E:\github\GitHub\Praca-inzynierska\build\Praca Inżynierska_Data\Managed\..\Plugins\x86_64\grpc_csharp_ext.x64.dll"
+  at Grpc.Core.Internal.UnmanagedLibrary..ctor (System.String[] libraryPathAlternatives) [0x00063] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension.Load () [0x000d7] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension..ctor () [0x00006] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension.Get () [0x00022] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeMethods.Get () [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment.GrpcNativeInit () [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment..ctor () [0x0001e] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment.AddRef () [0x00028] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Channel..ctor (System.String target, Grpc.Core.ChannelCredentials credentials, System.Collections.Generic.IEnumerable`1[T] options) [0x00051] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Channel..ctor (System.String target, Grpc.Core.ChannelCredentials credentials) [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Unity.MLAgents.RpcCommunicator.Initialize (System.Int32 port, Unity.MLAgents.CommunicatorObjects.UnityOutputProto unityOutput, Unity.MLAgents.CommunicatorObjects.UnityInputProto& unityInput) [0x0001d] in <b06eea434cad45f0b09235dd5add2dd2>:0 
+  at Unity.MLAgents.RpcCommunicator.Initialize (Unity.MLAgents.CommunicatorInitParameters initParameters, Unity.MLAgents.UnityRLInitParameters& initParametersOut) [0x0004e] in <b06eea434cad45f0b09235dd5add2dd2>:0 
+Couldn't connect to trainer on port 5005 using API version 1.5.0. Will perform inference instead.
+ERROR: Shader TextMeshPro/Sprite shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader UI/Default shader is not supported on this GPU (none of subshaders/fallbacks are suitable)

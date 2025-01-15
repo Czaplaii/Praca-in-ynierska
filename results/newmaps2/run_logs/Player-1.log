@@ -1,0 +1,33 @@
+Mono path[0] = 'E:/github/GitHub/Praca-inzynierska/build/Praca Inżynierska_Data/Managed'
+Mono config path = 'E:/github/GitHub/Praca-inzynierska/build/MonoBleedingEdge/etc'
+[Physics::Module] Initialized MultithreadedJobDispatcher with 11 workers.
+Initialize engine version: 2022.3.21f1 (bf09ca542b87)
+[Subsystems] Discovering subsystems at path E:/github/GitHub/Praca-inzynierska/build/Praca Inżynierska_Data/UnitySubsystems
+GfxDevice: creating device client; threaded=1; jobified=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 2070 (ID=0x1f02)
+    Vendor:   NVIDIA
+    VRAM:     8006 MB
+    Driver:   32.0.15.6636
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  5.265 seconds
+- Finished resetting the current domain, in  0.002 seconds
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.741800 ms
+Unexpected exception when trying to initialize communication: System.IO.IOException: Error loading native library "E:\github\GitHub\Praca-inzynierska\build\Praca Inżynierska_Data\Managed\..\Plugins\x86_64\grpc_csharp_ext.x64.dll"
+  at Grpc.Core.Internal.UnmanagedLibrary..ctor (System.String[] libraryPathAlternatives) [0x00063] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension.Load () [0x000d7] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension..ctor () [0x00006] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeExtension.Get () [0x00022] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Internal.NativeMethods.Get () [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment.GrpcNativeInit () [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment..ctor () [0x0001e] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.GrpcEnvironment.AddRef () [0x00028] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Channel..ctor (System.String target, Grpc.Core.ChannelCredentials credentials, System.Collections.Generic.IEnumerable`1[T] options) [0x00051] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Grpc.Core.Channel..ctor (System.String target, Grpc.Core.ChannelCredentials credentials) [0x00000] in <2f154ad39ec14cfea604815989d96352>:0 
+  at Unity.MLAgents.RpcCommunicator.Initialize (System.Int32 port, Unity.MLAgents.CommunicatorObjects.UnityOutputProto unityOutput, Unity.MLAgents.CommunicatorObjects.UnityInputProto& unityInput) [0x0001d] in <b06eea434cad45f0b09235dd5add2dd2>:0 
+  at Unity.MLAgents.RpcCommunicator.Initialize (Unity.MLAgents.CommunicatorInitParameters initParameters, Unity.MLAgents.UnityRLInitParameters& initParametersOut) [0x0004e] in <b06eea434cad45f0b09235dd5add2dd2>:0 
+Couldn't connect to trainer on port 5006 using API version 1.5.0. Will perform inference instead.

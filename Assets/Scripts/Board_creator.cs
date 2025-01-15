@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using Newtonsoft.Json;
 
 public class Board_creator : MonoBehaviour
 {
@@ -13,11 +14,365 @@ public class Board_creator : MonoBehaviour
     [SerializeField] List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // lista numerów do wyboru
     [SerializeField] private int seed; // ziarno do œledzenia konkretnego losowania
     private System.Random rand; // losowanie
-    [SerializeField, Range(1, 3)] private int difficulty; // poziom trudnoœci
+    //[SerializeField, Range(1, 3)] private int difficulty; // poziom trudnoœci
     private clock clockreset; // odniesienie do clock
     public SudokuAgent sudokuAgent;
     [SerializeField] TMP_Text seedtext;
+    [SerializeField] private TextAsset jsonData; // Przypisz plik JSON w Inspectorze
+    private SudokuDataset dataset;
 
+    // Struktura do odwzorowania danych JSON
+    private class SudokuDataset
+    {
+        public string[] quizzes { get; set; }
+        public string[] solutions { get; set; }
+    }
+
+    void Start()
+    {
+        clockreset = FindObjectOfType<clock>();
+
+        // Inicjalizuj generator liczb losowych
+        if (seed == -1)
+        {
+            seed = Mathf.Abs((int)(System.DateTime.Now.Ticks / 10000));
+        }
+        rand = new System.Random(seed);
+
+        // Za³aduj dane JSON tylko raz
+        dataset = LoadSudokuDataset();
+        if (dataset == null)
+        {
+            Debug.LogError("B³¹d: Nie uda³o siê za³adowaæ danych Sudoku.");
+            return;
+        }
+
+        LoadRandomSudokuFromDataset(dataset);
+        DefineButtons();
+        StartButtonDeactivate();
+    }
+
+    private SudokuDataset LoadSudokuDataset()
+    {
+        if (jsonData == null)
+        {
+            Debug.LogError("jsonData is null. Please assign a valid JSON file.");
+            return null;
+        }
+
+        Debug.Log("Loaded JSON Data: " + jsonData.text);
+
+        try
+        {
+            SudokuDataset dataset = JsonConvert.DeserializeObject<SudokuDataset>(jsonData.text);
+            if (dataset != null)
+            {
+                Debug.Log("Sudoku dataset loaded successfully.");
+            }
+            else
+            {
+                Debug.LogError("Deserialized dataset is null.");
+            }
+            return dataset;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error loading dataset: {e.Message}");
+            return null;
+        }
+    }
+
+    private void LoadRandomSudokuFromDataset(SudokuDataset dataset)
+    {
+        if (dataset.quizzes == null || dataset.solutions == null)
+        {
+            Debug.LogError("Quizzes or solutions is null.");
+            return;
+        }
+
+        if (dataset.quizzes.Length == 0 || dataset.solutions.Length == 0)
+        {
+            Debug.LogError("Dataset is empty or missing quizzes/solutions.");
+            return;
+        }
+
+        seed = rand.Next(0, dataset.quizzes.Length);
+        Debug.Log($"Selected random index: {seed}");
+
+        string quiz = dataset.quizzes[seed];
+        string solution = dataset.solutions[seed];
+
+        if (string.IsNullOrEmpty(quiz) || string.IsNullOrEmpty(solution))
+        {
+            Debug.LogError($"Invalid data at index {seed}. Quiz or solution is null/empty.");
+            return;
+        }
+
+        FillBoardFromString(quiz, PlayerBoard);
+        FillBoardFromString(solution, Board);
+
+        UpdateBoardUI();
+    }
+
+
+    private void FillBoardFromString(string boardString, int[,] targetBoard)
+    {
+        if (boardString.Length != 81)
+        {
+            Debug.LogError("Invalid board string length. Expected 81 characters.");
+            return;
+        }
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                char value = boardString[i * 9 + j];
+                targetBoard[j, i] = value == '.' ? 0 : (value - '0'); // '.' oznacza puste pole
+            }
+        }
+    }
+
+    private void UpdateBoardUI()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                int buttonIndex = (i * 9) + j;
+                TMP_Text buttonText = BoardButtons[buttonIndex].GetComponentInChildren<TMP_Text>();
+
+                if (PlayerBoard[j, i] != 0)
+                {
+                    buttonText.text = PlayerBoard[j, i].ToString();
+                    BoardButtons[buttonIndex].interactable = false; // Pola wstêpnie wype³nione nie s¹ interaktywne
+                }
+                else
+                {
+                    buttonText.text = " ";
+                    BoardButtons[buttonIndex].interactable = true;
+                }
+            }
+        }
+    }
+
+    private void DefineButtons()
+    {
+        for (int i = 0; i < BoardButtons.Length; i++)
+        {
+            int index = i;
+            BoardButtons[i].onClick.AddListener(() => OnButtonClicked(index));
+        }
+    }
+
+    public void OnButtonClicked(int index)
+    {
+        int declared = PlayerPrefs.GetInt("number") + 1;
+        TMP_Text buttonText = BoardButtons[index].GetComponentInChildren<TMP_Text>();
+        if (declared != 0)
+        {
+            if (declared == Board[index % 9, index / 9])
+            {
+                buttonText.text = (Board[index % 9, index / 9]).ToString();
+                BoardButtons[index].interactable = false;
+                Color currentColor = BoardButtons[index].image.color;
+                if (currentColor.r == 0.992f && currentColor.g == 0.286f && currentColor.b == 0.286f)  //sprawdzamy czy wczeœniej pole by³o b³êdnie zaznaczone
+                {
+                    BoardButtons[index].image.color = new Color(0.898f, 0.678f, 0.122f, 1f);  // Pomarañczowy
+                    PlayerBoard[index % 9, index / 9] = Board[index % 9, index / 9];
+                    //if(IsPuzzleDone())
+                        //ResetGame();
+                }
+                else
+                {
+                    BoardButtons[index].image.color = new Color(0.106f, 0.737f, 0.024f, 1f);  // Zielony    
+                    PlayerBoard[index % 9, index / 9] = Board[index % 9, index / 9];
+                    //if (IsPuzzleDone())
+                      //  ResetGame();
+                }
+            }
+            else
+            {
+                int mistaketemp = PlayerPrefs.GetInt("mistake") + 1;
+                PlayerPrefs.SetInt("mistake", mistaketemp);
+                buttonText.text = declared.ToString();
+                BoardButtons[index].image.color = new Color(0.992f, 0.286f, 0.286f); //czerwony
+            }
+        }
+        else
+            Debug.Log("nie wybrano numeru");
+    }
+
+    void StartButtonDeactivate() // wy³¹cz guziki wype³nionych komórek
+    {
+        for (int i = 0; i < BoardButtons.GetLength(0); i++)
+        {
+            TMP_Text buttonText = BoardButtons[i].GetComponentInChildren<TMP_Text>();
+            if (buttonText.text != " ")
+                BoardButtons[i].interactable = false;
+        }
+    }
+
+    public int[,] GetBoard() //przekazujemy tablicê agentowi
+    {
+        return PlayerBoard;
+    }
+
+    public int[,] GetTrueBoard() //przekazujemy tablicê agentowi
+    {
+        return Board;
+    }
+
+    public Button[] GetButtons() //przekazujemy tablicê agentowi
+    {
+        return BoardButtons;
+    }
+
+    void ShowPlayerBoard()
+    {
+        string boardRepresentation = ""; // Przechowuje reprezentacjê planszy jako tekst
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                boardRepresentation += PlayerBoard[j, i] + " "; // Dodajemy liczbê i spacjê dla przejrzystoœci
+            }
+            boardRepresentation += "\n"; // Nowa linia po ka¿dym wierszu
+        }
+
+        Debug.Log(boardRepresentation); // Wypisujemy ca³¹ planszê jako tekst
+    }
+
+    void ShowTruePlayerBoard()
+    {
+        string boardRepresentation2 = ""; // Przechowuje reprezentacjê planszy jako tekst
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                boardRepresentation2 += Board[j, i] + " "; // Dodajemy liczbê i spacjê dla przejrzystoœci
+            }
+            boardRepresentation2 += "\n"; // Nowa linia po ka¿dym wierszu
+        }
+
+        Debug.Log(boardRepresentation2); // Wypisujemy ca³¹ planszê jako tekst
+    }
+
+    public bool IsInRow(int row, int number, int[,] tab) // czy wyst¹pi³a w wierszu?
+    {
+        for (int i = 0; i < tab.GetLength(1); i++)
+        {
+            if (tab[row, i] == number)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool IsInColumn(int column, int number, int[,] tab)// czy wyst¹pi³a w kolumnie?
+    {
+        for (int i = 0; i < tab.GetLength(0); i++)
+        {
+            if (tab[i, column] == number)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool IsInSector(int row, int column, int number, int[,] tab) //czy wyst¹pi³a w kwadracie 9x9
+    {
+        int sectorRowStart = (row / 3) * 3;
+        int sectorColumnStart = (column / 3) * 3;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (tab[sectorRowStart + i, sectorColumnStart + j] == number)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void ResetGame()
+    {
+        // Wybierz nowy seed i zainicjalizuj generator liczb losowych
+        seed = rand.Next(0, dataset.quizzes.Length);
+        Debug.Log($"Wybrano nowy seed: {seed}");
+
+        // Pobierz now¹ planszê i rozwi¹zanie
+        string quiz = dataset.quizzes[seed];
+        string solution = dataset.solutions[seed];
+
+        if (string.IsNullOrEmpty(quiz) || string.IsNullOrEmpty(solution))
+        {
+            Debug.LogError("B³¹d: Nie mo¿na wczytaæ nowej planszy. Reset gry przerwany.");
+            return;
+        }
+
+        // Aktualizuj plansze
+        FillBoardFromString(quiz, PlayerBoard);
+        FillBoardFromString(solution, Board);
+
+        // Zresetuj stan przycisków
+        for (int i = 0; i < BoardButtons.Length; i++)
+        {
+            int x = i % 9; // Kolumna
+            int y = i / 9; // Wiersz
+            Button button = BoardButtons[i];
+            TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+
+            // Ustaw wartoœci przycisków na podstawie PlayerBoard
+            if (PlayerBoard[x, y] != 0)
+            {
+                buttonText.text = PlayerBoard[x, y].ToString();
+                button.interactable = false;
+                button.image.color = Color.white; // Domyœlny kolor
+            }
+            else
+            {
+                buttonText.text = " ";
+                button.interactable = true;
+                button.image.color = Color.white;
+            }
+        }
+
+        // Zresetuj zmienne gry
+        PlayerPrefs.SetInt("mistake", 0);
+        clockreset.ResetTime();
+        seedtext.text = "Seed: " + seed.ToString();
+
+        // Debugowanie
+        Debug.Log("Gra zosta³a zresetowana.");
+        ShowPlayerBoard();
+        ShowTruePlayerBoard();
+    }
+
+    public bool IsPuzzleDone() //warunek zwyciêstwa
+    {
+        for (int i = 0; i < BoardButtons.Length; i++)
+        {
+            Button button = BoardButtons[i];
+            if (button.interactable == true)
+                return false;
+        }
+        Debug.Log("Wygra³eœ!!!");
+        //round++;
+        //PlayerPrefs.SetInt("iter", round);
+        return true;
+    }
+}
+
+
+    /*
     void Start()
     {
         clockreset = FindObjectOfType<clock>();//szukamy obiektu ze skryptem clock
@@ -212,7 +567,7 @@ public class Board_creator : MonoBehaviour
             StartButtonDeactivate();
         }
     }
-
+    
     void StartButtonDeactivate() // wy³¹cz guziki wype³nionych komórek
     {
         for (int i = 0; i < BoardButtons.GetLength(0); i++)
@@ -271,8 +626,8 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
         {
             ResetGame();
         }
-        */ 
-    }
+        */
+    //}
 
     /*
     public bool IsPuzzleDone() //warunek zwyciêstwa
@@ -289,7 +644,7 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
         return true;
     }
     */
-
+    /*
     public void ResetGame() //
     {
         // Resetuj planszê (tablicê Board)
@@ -374,4 +729,5 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
 
         Debug.Log(boardRepresentation2); // Wypisujemy ca³¹ planszê jako tekst
     }
-}
+    
+}*/

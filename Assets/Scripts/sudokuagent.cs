@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using Unity.Barracuda;
-
+using System;
 public class SudokuAgent : Agent
 {
     public int[,] Board = new int[9, 9]; // Pe³ne rozwi¹zanie sudoku (ukryte przed AI)
@@ -18,6 +18,7 @@ public class SudokuAgent : Agent
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
     private IDiscreteActionMask actionMask; //maskowanie
+    private List<int>[,] validMoves = new List<int>[9, 9];
 
     void Awake()
     {
@@ -48,7 +49,8 @@ public class SudokuAgent : Agent
         PlayerPrefs.SetInt("iter", episodeCount);
         playerBoard = board.GetBoard(); //przypisujemy tablicê agenta
         Board = board.GetTrueBoard(); //przypisujemy pe³ne rozwi¹zanie do porównañ
-        invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
+        invalidMoves.Clear(); //wyczyœæ niepoprawne ruchy z poprzedniego epizodu
+        InitializeValidMoves(); // Dodaj inicjalizacjê mo¿liwych ruchów
         ShowPlayerBoard(); // do debugowania
         ShowTruePlayerBoard(); //do debugowania
 
@@ -148,107 +150,142 @@ public class SudokuAgent : Agent
     {
         // Akcja AI: wybór pola i liczby
         int fieldIndex = actions.DiscreteActions[0]; // Pole do modyfikacji (0-80)
-        number = actions.DiscreteActions[1]; // Liczba do wstawienia (0-8)
-        bool didMove = false; //sprawdzamy czy agent nie odpuœci³ tury
-        //Debug.Log("Wybrany number: " + number);
-        int row = fieldIndex % 9; 
+        int number = actions.DiscreteActions[1]; // Liczba do wstawienia (0-8)
+        bool didMove = false; // Sprawdzamy, czy agent wykona³ ruch
+
+        int row = fieldIndex % 9;
         int col = fieldIndex / 9;
-        Actions++; //w cmd odpowiednik Step
+        Actions++; // Zliczanie akcji agenta
 
         string moveKey = $"{row},{col},{number}";
-        //Debug.Log("Iloœæ akcji: " + Actions);
+
         // Jeœli pole jest puste, pozwól na ruch
         if (playerBoard[row, col] == 0)
         {
-            //Debug.Log("Playerboard response : "+row + col + playerBoard[row, col]);
-            if (intension[number].interactable)  // 'intension' to przyciski z banner_bar
+            if (intension[number].interactable)
             {
                 intension[number].onClick.Invoke();
-                AddReward(0.1f);
+                AddReward(0.1f); // Nagroda za próbê eksploracji
                 didMove = true;
-                //Debug.Log("Intension number: " + number);
             }
-            number++;
-            //Debug.Log("IsMoveValid number: " + number);
-            if (IsMoveValid(row, col, number)) //czy ruch agenta jest zgodny z zasadami
+
+            if (IsMoveValid(row, col, number)) // Czy ruch jest poprawny?
             {
                 buttons[fieldIndex].onClick.Invoke();
                 playerBoard[row, col] = number; // Wstaw liczbê
-                AddReward(10.0f+(1f*Streak)); // Nagroda za poprawny ruch
-                if (Streak <= 5) 
-                {
-                    Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
-                }
-                if (IsColFull(row))
-                {
-                    Debug.Log("Kolumna jest pe³na");
-                    AddReward(20f);
-                }
-                if (IsRowFull(col))
-                {
-                    Debug.Log("Pe³ny Rz¹d");
-                    AddReward(20f);
-                }
-                if (IsSectorFull(row, col))
-                {
-                    Debug.Log("Sektor jest skoñczony");
-                    AddReward(20f);
-                }
-                didMove = true; 
-                playerBoard = board.GetBoard();
+                AddReward((2f + 1f * Streak));
 
-                RemoveInvalidMoves(row, col); //funkcja usuwaj¹ca z hashsetu informacje o b³êdach z tej komórki
+                UpdateValidMoves(row, col, number); // Zaktualizuj mo¿liwe ruchy
 
-                Debug.Log("Agent poprawnie oznaczy³ liczbê" +number + " w "+ row + col);
-                //ShowPlayerBoard();
+                // Nagrody za czêœciowe cele
+                if (IsColFull(col)) AddReward(15f);
+                if (IsRowFull(row)) AddReward(10f);
+                if (IsSectorFull(row, col)) AddReward(20f);
+
+                Streak = Math.Min(Streak + 1, 5); // Ograniczenie maksymalnego streaka
+                didMove = true;
             }
-            else
+            else // Ruch niezgodny z zasadami
             {
-                if (ObviousMistake(row, col, number, playerBoard))
-                {
-                    Debug.Log("Liczba wyst¹pi³a w wierszu, sektorze lub kolumnie");
-                    AddReward(-5f); // Kara za oczywisty b³¹d
-                }
                 buttons[fieldIndex].onClick.Invoke();
                 if (invalidMoves.Contains(moveKey))
                 {
-                        AddReward(-2f);
+                    AddReward(-1f * invalidMoves.Count); // Dynamiczna kara za powtórzenie b³êdu
                 }
                 else
                 {
-                    invalidMoves.Add(moveKey); // Zapisz b³êdny ruch
-                        AddReward(-1f);
+                    invalidMoves.Add(moveKey); //dodaj wykorzystany niepoprawny ruch
+                    AddReward(-0.5f);
                 }
                 Streak = 0;
-                //Debug.Log("Agent niepoprawnie oznaczy³ liczbê, poprawna odpowiedŸ dla" +row + col+" = " + Board[row,col]);
                 didMove = true;
             }
         }
-        else
+        else // Pole jest ju¿ zajête
         {
-            Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
-            AddReward(-4f); // Kara za próbê zmiany zajêtego pola
+            AddReward(-4f); // Kara za wybór zajêtego pola
             didMove = true;
         }
 
-        // SprawdŸ, czy gra zosta³a ukoñczona
+        // Nagroda za ukoñczenie planszy
         if (IsPuzzleSolved())
         {
-            AddReward(150.0f); // Nagroda za ukoñczenie planszy
-            didMove= true;
+            AddReward(500.0f); // Du¿a nagroda za ukoñczenie gry
             EndEpisode();
+            return;
         }
 
-        // Jeœli agent nie wykona³ ruchu, na³ó¿ dodatkow¹ karê
+        // Nagroda za postêp wype³niania planszy (proporcjonalna)
+        float completionRate = CountFilledCells() / 81f;
+        AddReward(completionRate * 5f);
+
+        // Kara za brak ruchu
         if (!didMove)
         {
-            AddReward(-5f); // Kara za brak ruchu
+            AddReward(-2f);
         }
-        // Iteracja po elementach
-        /*foreach (var name in invalidMoves)
+    }
+
+    private int CountFilledCells()
+    {
+        int count = 0;
+        for (int i = 0; i < 9; i++)
         {
-            Debug.Log("HashSet: " + name);
-        }*/
+            for (int j = 0; j < 9; j++)
+            {
+                if (playerBoard[i, j] != 0) // Jeœli komórka jest wype³niona
+                {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private void InitializeValidMoves()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                validMoves[i, j] = new List<int>();
+                if (playerBoard[i, j] == 0) // Jeœli komórka jest pusta
+                {
+                    for (int num = 1; num <= 9; num++)
+                    {
+                        if (IsMoveValid(i, j, num)) // SprawdŸ, czy liczba jest poprawna
+                        {
+                            validMoves[i, j].Add(num);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void UpdateValidMoves(int row, int col, int number)
+    {
+        // Usuniêcie mo¿liwoœci dla konkretnej komórki
+        validMoves[row, col].Clear(); // Komórka jest ju¿ wype³niona, wiêc brak mo¿liwych ruchów
+
+        // PrzejdŸ przez wiersz, kolumnê i sektor, aby zaktualizowaæ mo¿liwe ruchy
+        for (int i = 0; i < 9; i++)
+        {
+            // Usuñ wstawion¹ liczbê z mo¿liwych wartoœci w tym wierszu i kolumnie
+            validMoves[row, i]?.Remove(number);
+            validMoves[i, col]?.Remove(number);
+        }
+
+        // Usuñ wstawion¹ liczbê z sektora
+        int startRow = (row / 3) * 3;
+        int startCol = (col / 3) * 3;
+        for (int i = startRow; i < startRow + 3; i++)
+        {
+            for (int j = startCol; j < startCol + 3; j++)
+            {
+                validMoves[i, j]?.Remove(number);
+            }
+        }
     }
 
     private bool IsMoveValid(int row, int col, int number) //sprawdzamy czy ruch jest poprawny
