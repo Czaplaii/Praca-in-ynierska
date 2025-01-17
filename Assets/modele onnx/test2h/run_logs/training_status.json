@@ -1,0 +1,56 @@
+{
+    "SudokuAgent": {
+        "checkpoints": [
+            {
+                "steps": 476600,
+                "file_path": "results\\resumetraining1\\SudokuAgent\\SudokuAgent-476600.onnx",
+                "reward": -12.160784920056662,
+                "creation_time": 1737043388.0681164,
+                "auxillary_file_paths": [
+                    "results\\resumetraining1\\SudokuAgent\\SudokuAgent-476600.pt"
+                ]
+            },
+            {
+                "steps": 499999,
+                "file_path": "results\\resumetraining1\\SudokuAgent\\SudokuAgent-499999.onnx",
+                "reward": -60.717239445653455,
+                "creation_time": 1737045296.8386226,
+                "auxillary_file_paths": [
+                    "results\\resumetraining1\\SudokuAgent\\SudokuAgent-499999.pt"
+                ]
+            },
+            {
+                "steps": 999999,
+                "file_path": "results\\resumetraining1\\SudokuAgent\\SudokuAgent-999999.onnx",
+                "reward": -36.01926369076475,
+                "creation_time": 1737047827.7095394,
+                "auxillary_file_paths": [
+                    "results\\resumetraining1\\SudokuAgent\\SudokuAgent-999999.pt"
+                ]
+            },
+            {
+                "steps": 1230099,
+                "file_path": "results\\resumetraining1\\SudokuAgent\\SudokuAgent-1230099.onnx",
+                "reward": -37.550320406882996,
+                "creation_time": 1737049203.4371848,
+                "auxillary_file_paths": [
+                    "results\\resumetraining1\\SudokuAgent\\SudokuAgent-1230099.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1230099,
+            "file_path": "results\\resumetraining1\\SudokuAgent.onnx",
+            "reward": -37.550320406882996,
+            "creation_time": 1737049203.4371848,
+            "auxillary_file_paths": [
+                "results\\resumetraining1\\SudokuAgent\\SudokuAgent-1230099.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.5.1+cpu"
+    }
+}

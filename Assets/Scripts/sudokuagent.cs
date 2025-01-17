@@ -22,7 +22,7 @@ public class SudokuAgent : Agent
     void Awake()
     {
         Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
-        //Time.timeScale = 0.01f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
+        Time.timeScale = 0.05f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
@@ -180,7 +180,7 @@ public class SudokuAgent : Agent
             {
                 buttons[fieldIndex].onClick.Invoke();
                 playerBoard[row, col] = number; // Wstaw liczbê
-                AddReward(10.0f+(1f*Streak)); // Nagroda za poprawny ruch
+                AddReward(5.0f+(1f*Streak)); // Nagroda za poprawny ruch
                 if (Streak <= 5) 
                 {
                     Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
@@ -210,11 +210,11 @@ public class SudokuAgent : Agent
             }
             else
             {
-                if (ObviousMistake(row, col, number, playerBoard))
+                /*if (ObviousMistake(row, col, number, playerBoard))
                 {
                     Debug.Log("Liczba wyst¹pi³a w wierszu, sektorze lub kolumnie");
                     AddReward(-5f); // Kara za oczywisty b³¹d
-                }
+                }*/
                 buttons[fieldIndex].onClick.Invoke();
                 if (invalidMoves.Contains(moveKey))
                 {
@@ -240,7 +240,7 @@ public class SudokuAgent : Agent
         // SprawdŸ, czy gra zosta³a ukoñczona
         if (IsPuzzleSolved())
         {
-            AddReward(150.0f); // Nagroda za ukoñczenie planszy
+            AddReward(500.0f); // Nagroda za ukoñczenie planszy
             didMove= true;
             EndEpisode();
         }

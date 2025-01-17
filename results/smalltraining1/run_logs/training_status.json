@@ -1,0 +1,38 @@
+{
+    "SudokuAgent": {
+        "checkpoints": [
+            {
+                "steps": 0,
+                "file_path": "results\\smalltraining1\\SudokuAgent\\SudokuAgent-0.onnx",
+                "reward": null,
+                "creation_time": 1737052249.7409573,
+                "auxillary_file_paths": [
+                    "results\\smalltraining1\\SudokuAgent\\SudokuAgent-0.pt"
+                ]
+            },
+            {
+                "steps": 103727,
+                "file_path": "results\\smalltraining1\\SudokuAgent\\SudokuAgent-103727.onnx",
+                "reward": 840.9687245686849,
+                "creation_time": 1737052918.7296536,
+                "auxillary_file_paths": [
+                    "results\\smalltraining1\\SudokuAgent\\SudokuAgent-103727.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 103727,
+            "file_path": "results\\smalltraining1\\SudokuAgent.onnx",
+            "reward": 840.9687245686849,
+            "creation_time": 1737052918.7296536,
+            "auxillary_file_paths": [
+                "results\\smalltraining1\\SudokuAgent\\SudokuAgent-103727.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.5.1+cpu"
+    }
+}

@@ -211,7 +211,7 @@ public class Board_creator : MonoBehaviour
         int show;
         if (difficulty == 1)
         {
-            //show = rand.Next(79, 80);
+            //show = rand.Next(63, 70);
             show = rand.Next(41, 51);
         }
         else if (difficulty == 2)
