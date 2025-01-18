@@ -39,11 +39,11 @@ public class Board_creator : MonoBehaviour
         }
         rand = new System.Random(seed);
 
-        // Za³aduj dane JSON tylko raz
+        // Za³aduj dane JSON
         dataset = LoadSudokuDataset();
         if (dataset == null)
         {
-            Debug.LogError("B³¹d: Nie uda³o siê za³adowaæ danych Sudoku.");
+            Debug.LogError("B³¹d: Nie uda³o siê za³adowaæ danych.");
             return;
         }
 
@@ -56,73 +56,41 @@ public class Board_creator : MonoBehaviour
     {
         if (jsonData == null)
         {
-            Debug.LogError("jsonData is null. Please assign a valid JSON file.");
             return null;
         }
-
-        Debug.Log("Loaded JSON Data: " + jsonData.text);
-
         try
         {
             SudokuDataset dataset = JsonConvert.DeserializeObject<SudokuDataset>(jsonData.text);
             if (dataset != null)
             {
-                Debug.Log("Sudoku dataset loaded successfully.");
+                Debug.Log("Sudoku dataset za³adowany.");
             }
             else
             {
-                Debug.LogError("Deserialized dataset is null.");
+                Debug.LogError("dataset jest pusty.");
             }
             return dataset;
         }
         catch (Exception e)
         {
-            Debug.LogError($"Error loading dataset: {e.Message}");
+            Debug.LogError($"Error: {e.Message}");
             return null;
         }
     }
 
     private void LoadRandomSudokuFromDataset(SudokuDataset dataset)
     {
-        if (dataset.quizzes == null || dataset.solutions == null)
-        {
-            Debug.LogError("Quizzes or solutions is null.");
-            return;
-        }
-
-        if (dataset.quizzes.Length == 0 || dataset.solutions.Length == 0)
-        {
-            Debug.LogError("Dataset is empty or missing quizzes/solutions.");
-            return;
-        }
-
         seed = rand.Next(0, dataset.quizzes.Length);
-        Debug.Log($"Selected random index: {seed}");
-
         string quiz = dataset.quizzes[seed];
         string solution = dataset.solutions[seed];
-
-        if (string.IsNullOrEmpty(quiz) || string.IsNullOrEmpty(solution))
-        {
-            Debug.LogError($"Invalid data at index {seed}. Quiz or solution is null/empty.");
-            return;
-        }
-
         FillBoardFromString(quiz, PlayerBoard);
         FillBoardFromString(solution, Board);
-
         UpdateBoardUI();
     }
 
 
     private void FillBoardFromString(string boardString, int[,] targetBoard)
     {
-        if (boardString.Length != 81)
-        {
-            Debug.LogError("Invalid board string length. Expected 81 characters.");
-            return;
-        }
-
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
