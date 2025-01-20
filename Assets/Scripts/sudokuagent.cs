@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using Unity.Barracuda;
+using System;
 
 public class SudokuAgent : Agent
 {
@@ -17,12 +18,11 @@ public class SudokuAgent : Agent
     private int episodeCount = 0,Actions=0, Streak =0; // Licznik epizodów
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
-    private IDiscreteActionMask actionMask; //maskowanie
 
     void Awake()
     {
-        Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
-        //Time.timeScale = 0.05f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
+        //Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+        //Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
@@ -97,8 +97,9 @@ public class SudokuAgent : Agent
 
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
-        string debugLog = "Maskowanie:\n"; // Pocz¹tek loga z opisem
+        
         int[] numberCounts = new int[9]; // Tablica do zliczania wyst¹pieñ ka¿dej liczby
+        //maskowanie zajêtych komórek
         for (int col = 0; col < 9; col++)
         {
             for (int row = 0; row < 9; row++)
@@ -108,20 +109,13 @@ public class SudokuAgent : Agent
                 if (playerBoard[row, col] != 0) // Komórka zajêta
                 {
                     actionMask.SetActionEnabled(0, index, false); //maskowanie liczb
-                    debugLog += "1 "; // Zablokowana komórka
                     int value = playerBoard[row, col]; //przypisz wyst¹pienie
                     numberCounts[value - 1]++; //inkrementuj wyst¹pienie danej liczby
                 }
-                else
-                {
-                    debugLog += "0 "; // Wolna komórka
-                }
             }
-            debugLog += "\n"; // Nowa linia dla nastêpnego wiersza
         }
-        Debug.Log(debugLog);
-        // maskowanie liczby, jeœli wyst¹pi³a 9 razy
         string debug2 = "Zliczanie liczb:\n";
+        //maskowanie liczb gdy wyst¹pi ich 9
         for (int i = 0; i < numberCounts.Length; i++)
         {
             debug2 += $"Liczba {i + 1}: {numberCounts[i]}\n";
@@ -130,38 +124,60 @@ public class SudokuAgent : Agent
                 actionMask.SetActionEnabled(1, i, false); //zamaskuj t¹ liczbê przed agentem
             }
         }
-        Debug.Log(debug2);
+        //Debug.Log(debug2);
 
-
-        //maskowanie liczby, jeœli pojawi³a siê w sektorze, rzêdzie lub kolumnie
-        string debug3 = "Zablokowane akcje:\n";
-        for (int col = 0; col < 9; col++)
+        for (int i = 0; i < 9; i++)
         {
-            for (int row = 0; row < 9; row++)
+            if (LastInCol(i))
             {
-                int number = playerBoard[row, col]; // Pobieramy liczbê z tablicy
-                if (number == 0) // Tylko dla pustych komórek
+                Debug.Log("last in column:");
+                for (int j = 0; j < 81; j++)
                 {
-                    // Sprawdzamy, czy liczba nie wystêpuje ju¿ w rzêdzie, kolumnie lub sektorze
-                    for (int i = 0; i < 9; i++)
+                    int row = j / 9;  // obliczamy numer wiersza
+                    Debug.Log(j + "=j, i = " + i);
+                    if (row == i)  // jeœli to jest element w wierszu i, pomijamy
+                        continue;
+                    else
                     {
-                        if (board.IsInRow(row, i + 1, playerBoard) || // Sprawdzenie, czy liczba wystêpuje w wierszu
-                            board.IsInColumn(col, i + 1, playerBoard) || // Sprawdzenie, czy liczba wystêpuje w kolumnie
-                            board.IsInSector(row, col, i + 1, playerBoard)) // Sprawdzenie, czy liczba wystêpuje w sektorze
+                        if (playerBoard[row, (j % 9)] == 0)
                         {
-                            debug3 += $"Liczba {i + 1} zosta³a zablokowana na pozycji ({row}, {col}):\n";
-                            debug3 += $"  - W rzêdzie: {board.IsInRow(row, i + 1, playerBoard)}\n";
-                            debug3 += $"  - W kolumnie: {board.IsInColumn(col, i + 1, playerBoard)}\n";
-                            debug3 += $"  - W sektorze: {board.IsInSector(row, col, i + 1, playerBoard)}\n";
-                            actionMask.SetActionEnabled(0, i, false); // Zablokowanie liczby i
+                            //actionMask.SetActionEnabled(0, j, false);
+                            for (i = 0; i < 9; i++)
+                            {
+                                //if (i != predicted)
+                                //  actionMask.SetActionEnabled(1, i, false);
+                            }
+                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
+                        }
+                    }
+
+                }
+                break;
+            }
+            else if (LastInRow(i))
+            {
+                for (int j = 0; j < 81; j++)
+                {
+                    int col = j % 9;  // obliczamy numer wiersza
+                    if (col == i)  // jeœli to jest element w wierszu i, pomijamy
+                        continue;
+                    else
+                    {
+                        if (playerBoard[col, (j / 9)] == 0)
+                        {
+                            //actionMask.SetActionEnabled(0, j, false);
+                            for (i = 0; i < 9; i++)
+                            {
+                                //if (i != predicted)
+                                  //  actionMask.SetActionEnabled(1, i, false);
+                            }
+                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
                         }
                     }
                 }
+                break;
             }
         }
-        //Debug.Log(debug3);
-        // Wyœwietlanie dostêpnych akcji na podstawie masek
-        PrintAvailableActions();
     }
 
 
@@ -298,7 +314,7 @@ public class SudokuAgent : Agent
         }
         else
         {
-            Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
+            //Debug.Log($"Agent wybra³ oznaczone pole" + row + " " +col + " = " + Board[row,col]);
             AddReward(-4f); // Kara za próbê zmiany zajêtego pola
             didMove = true;
         }
@@ -357,76 +373,6 @@ public class SudokuAgent : Agent
         return true;
     }
 
-
-    public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
-    {
-        //losowe liczby
-        /*
-        var discreteActions = actionsOut.DiscreteActions;
-        discreteActions[0] = Random.Range(0,81);
-        discreteActions[1] = Random.Range(0,8);
-        */
-        // WYPISZ CA£¥ KOLUMNÊ DOBRZE
-        
-        /*
-            var discreteActions = actionsOut.DiscreteActions;
-                for (int j = 0; j < 9; j++)
-                {
-                    if (playerBoard[0, j] == 0)
-                    {
-                        discreteActions[0] = (j*9);
-                        Debug.Log(discreteActions[0]);
-                        discreteActions[1] = (Board[0, j])-1;
-                        Debug.Log(discreteActions[1]);
-                        return; 
-                    }
-                }
-        */
-
-        // WYPISZ CA£Y RZ¥D DOBRZE
-        /*
-            var discreteActions = actionsOut.DiscreteActions;
-                for (int j = 0; j < 9; j++)
-                {
-                    if (playerBoard[j, 0] == 0)
-                    {
-                        discreteActions[0] = (j);
-                        //Debug.Log(discreteActions[0]);
-                        discreteActions[1] = (Board[j, 0])-1;
-                        //Debug.Log(discreteActions[1]);
-                        return; 
-                    }
-                }
-
-        */
-        // WYPISZ CA£Y SEKTOR
-        /*
-        int currentSector = 2; // Numer sektora (od 0 do 8)
-        Debug.Log("Heuristic called");
-
-        int sectorColumnStart = (currentSector / 3) * 3;
-        int sectorRowStart = (currentSector % 3) * 3;
-        var discreteActions = actionsOut.DiscreteActions;
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                int row = sectorRowStart + i;
-                int col = sectorColumnStart + j;
-
-                if (playerBoard[row, col] == 0)
-                {
-                    discreteActions[0] = col * 9 + row;
-                    discreteActions[1] = Board[row, col] - 1;
-                    Debug.Log($"Heuristic Action: fieldIndex={discreteActions[0]}, value={discreteActions[1] + 1}");
-                    currentSector = (currentSector + 1) % 9;
-                    return;
-                }
-            }
-        }
-
-        */
-    }
     bool IsColFull(int row)
     {
         for (int i = 0; i < 9; i++)
@@ -524,7 +470,137 @@ public class SudokuAgent : Agent
             boardRepresentation += "\n"; // Nowa linia po ka¿dym wierszu
         }
 
-        Debug.Log(boardRepresentation); // Wypisujemy ca³¹ planszê jako tekst
+        //Debug.Log(boardRepresentation); // Wypisujemy ca³¹ planszê jako tekst
+    }
+
+    bool LastInCol(int col)
+    {
+        int count = 0;
+        int sum = 0;
+        bool lic = false;
+        for (int j = 0; j < 9; j++)
+        {
+            //Debug.Log("jestem na: " + playerBoard[j, col]);
+            sum = sum + playerBoard[j, col];
+            if(playerBoard[j, col] > 0)
+                count++;
+        }
+        //Debug.Log("count: " + count);
+        //Debug.Log("sum: " + sum);
+        if(count == 8)
+            lic = true;
+        return lic;
+    }
+
+    bool LastInRow(int row)
+    {
+        int count = 0;
+        int sum = 0;
+        bool lic = false;
+        for (int j = 0; j < 9; j++)
+        {
+            //Debug.Log("jestem na: " + playerBoard[row, j]);
+            sum = sum + playerBoard[row, j];
+            if (playerBoard[row, j] > 0)
+                count++;
+        }
+        //Debug.Log("count: " + count);
+        //Debug.Log("sum: " + sum);
+        if (count == 8)
+            lic = true;
+        return lic;
+    }
+
+    //jeœli rz¹d, to true
+    int lastnumber(bool row, int type)
+    {
+        int sum = 0;
+        int predicted = 0;
+        for (int j = 0; j < 9; j++)
+        {
+            if (row) 
+            {
+                sum = sum + playerBoard[type, j];
+                Debug.Log("suma wiersza" + sum);
+            }
+            else
+            {
+                sum = sum + playerBoard[j, type];
+                Debug.Log("suma kolumny" + sum);
+            }
+        }
+        predicted = 45 - sum - 1;
+        return predicted;
+    }
+
+    public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
+    {
+        //losowe liczby
+        /*
+        var discreteActions = actionsOut.DiscreteActions;
+        discreteActions[0] = Random.Range(0,81);
+        discreteActions[1] = Random.Range(0,8);
+        */
+        // WYPISZ CA£¥ KOLUMNÊ DOBRZE
+
+        /*
+            var discreteActions = actionsOut.DiscreteActions;
+                for (int j = 0; j < 9; j++)
+                {
+                    if (playerBoard[0, j] == 0)
+                    {
+                        discreteActions[0] = (j*9);
+                        Debug.Log(discreteActions[0]);
+                        discreteActions[1] = (Board[0, j])-1;
+                        Debug.Log(discreteActions[1]);
+                        return; 
+                    }
+                }
+        */
+
+        // WYPISZ CA£Y RZ¥D DOBRZE
+        /*
+            var discreteActions = actionsOut.DiscreteActions;
+                for (int j = 0; j < 9; j++)
+                {
+                    if (playerBoard[j, 0] == 0)
+                    {
+                        discreteActions[0] = (j);
+                        //Debug.Log(discreteActions[0]);
+                        discreteActions[1] = (Board[j, 0])-1;
+                        //Debug.Log(discreteActions[1]);
+                        return; 
+                    }
+                }
+
+        */
+        // WYPISZ CA£Y SEKTOR
+        /*
+        int currentSector = 2; // Numer sektora (od 0 do 8)
+        Debug.Log("Heuristic called");
+
+        int sectorColumnStart = (currentSector / 3) * 3;
+        int sectorRowStart = (currentSector % 3) * 3;
+        var discreteActions = actionsOut.DiscreteActions;
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                int row = sectorRowStart + i;
+                int col = sectorColumnStart + j;
+
+                if (playerBoard[row, col] == 0)
+                {
+                    discreteActions[0] = col * 9 + row;
+                    discreteActions[1] = Board[row, col] - 1;
+                    Debug.Log($"Heuristic Action: fieldIndex={discreteActions[0]}, value={discreteActions[1] + 1}");
+                    currentSector = (currentSector + 1) % 9;
+                    return;
+                }
+            }
+        }
+
+        */
     }
 }
 

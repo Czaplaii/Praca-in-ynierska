@@ -344,7 +344,7 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
 
         // reset parametrów
         PlayerPrefs.SetInt("mistake", 0);
-        clockreset.ResetTime();
+        //clockreset.ResetTime();
         seedtext.text = ("Seed: " + seed).ToString();
         Debug.Log("Gra zosta³a zresetowana.");
         Debug.Log("Plansza po resecie:");
