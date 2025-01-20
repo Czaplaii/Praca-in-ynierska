@@ -130,18 +130,17 @@ public class SudokuAgent : Agent
         {
             if (LastInCol(i))
             {
-                Debug.Log("last in column:");
                 for (int j = 0; j < 81; j++)
                 {
                     int row = j / 9;  // obliczamy numer wiersza
-                    Debug.Log(j + "=j, i = " + i);
+                    //Debug.Log(row + "=row, i = " + i);
                     if (row == i)  // jeœli to jest element w wierszu i, pomijamy
                         continue;
                     else
                     {
                         if (playerBoard[row, (j % 9)] == 0)
                         {
-                            //actionMask.SetActionEnabled(0, j, false);
+                            actionMask.SetActionEnabled(0, j, false);
                             for (i = 0; i < 9; i++)
                             {
                                 //if (i != predicted)
@@ -154,29 +153,31 @@ public class SudokuAgent : Agent
                 }
                 break;
             }
-            else if (LastInRow(i))
+            else
             {
-                for (int j = 0; j < 81; j++)
-                {
-                    int col = j % 9;  // obliczamy numer wiersza
-                    if (col == i)  // jeœli to jest element w wierszu i, pomijamy
-                        continue;
-                    else
+                if (LastInRow(i))
+                    for (int j = 0; j < 81; j++)
                     {
-                        if (playerBoard[col, (j / 9)] == 0)
+                        int col = j % 9;  // obliczamy numer wiersza
+                        if (col == i)  // jeœli to jest element w wierszu i, pomijamy
+                            continue;
+                        else
                         {
-                            //actionMask.SetActionEnabled(0, j, false);
-                            for (i = 0; i < 9; i++)
+                            if (playerBoard[col, (j / 9)] == 0)
                             {
+                                actionMask.SetActionEnabled(0, j, false);
+                                for (i = 0; i < 9; i++)
+                                {
                                 //if (i != predicted)
                                   //  actionMask.SetActionEnabled(1, i, false);
+                                }
+                                //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
                             }
-                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
                         }
+                        break;
                     }
-                }
-                break;
             }
+            
         }
     }
 
