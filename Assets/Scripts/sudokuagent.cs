@@ -22,7 +22,7 @@ public class SudokuAgent : Agent
     void Awake()
     {
         Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
-        Time.timeScale = 0.05f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
+        //Time.timeScale = 0.05f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
@@ -57,8 +57,43 @@ public class SudokuAgent : Agent
         invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
         ShowPlayerBoard(); // do debugowania
         ShowTruePlayerBoard(); //do debugowania
-
     }
+
+    public void PrintAvailableActions()
+    {
+        string possibleActionsLog = "Mo¿liwe akcje:\n"; // Inicjalizacja logu
+        // Iteracja przez wszystkie komórki na planszy
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                int number = playerBoard[row, col]; // Pobieramy liczbê z tablicy
+                if (number == 0) // Tylko dla pustych komórek
+                {
+                    possibleActionsLog += $"Pozycja ({row}, {col}) - Dostêpne akcje: ";
+
+                    // Sprawdzamy dostêpnoœæ liczb od 1 do 9
+                    for (int i = 1; i <= 9; i++)
+                    {
+                        // Sprawdzamy, czy liczba jest dostêpna w tym wierszu, kolumnie lub sektorze
+                        if (!board.IsInRow(row, i, playerBoard) &&
+                            !board.IsInColumn(col, i, playerBoard) &&
+                            !board.IsInSector(row, col, i, playerBoard))
+                        {
+                            // Jeœli liczba jest dostêpna, dodajemy j¹ do mo¿liwych akcji
+                            possibleActionsLog += $"{i} ";
+                        }
+                    }
+
+                    possibleActionsLog += "\n";
+                }
+            }
+        }
+
+        // Wyœwietlamy log z mo¿liwymi akcjami
+        Debug.Log(possibleActionsLog);
+    }
+
 
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
@@ -85,19 +120,50 @@ public class SudokuAgent : Agent
             debugLog += "\n"; // Nowa linia dla nastêpnego wiersza
         }
         Debug.Log(debugLog);
-
+        // maskowanie liczby, jeœli wyst¹pi³a 9 razy
         string debug2 = "Zliczanie liczb:\n";
         for (int i = 0; i < numberCounts.Length; i++)
         {
             debug2 += $"Liczba {i + 1}: {numberCounts[i]}\n";
-            if(numberCounts[i] >= 9) //jeœli dana liczba wyst¹pi 9 razy w tablicy
+            if (numberCounts[i] >= 9) //jeœli dana liczba wyst¹pi 9 razy w tablicy
             {
                 actionMask.SetActionEnabled(1, i, false); //zamaskuj t¹ liczbê przed agentem
             }
         }
         Debug.Log(debug2);
 
+
+        //maskowanie liczby, jeœli pojawi³a siê w sektorze, rzêdzie lub kolumnie
+        string debug3 = "Zablokowane akcje:\n";
+        for (int col = 0; col < 9; col++)
+        {
+            for (int row = 0; row < 9; row++)
+            {
+                int number = playerBoard[row, col]; // Pobieramy liczbê z tablicy
+                if (number == 0) // Tylko dla pustych komórek
+                {
+                    // Sprawdzamy, czy liczba nie wystêpuje ju¿ w rzêdzie, kolumnie lub sektorze
+                    for (int i = 0; i < 9; i++)
+                    {
+                        if (board.IsInRow(row, i + 1, playerBoard) || // Sprawdzenie, czy liczba wystêpuje w wierszu
+                            board.IsInColumn(col, i + 1, playerBoard) || // Sprawdzenie, czy liczba wystêpuje w kolumnie
+                            board.IsInSector(row, col, i + 1, playerBoard)) // Sprawdzenie, czy liczba wystêpuje w sektorze
+                        {
+                            debug3 += $"Liczba {i + 1} zosta³a zablokowana na pozycji ({row}, {col}):\n";
+                            debug3 += $"  - W rzêdzie: {board.IsInRow(row, i + 1, playerBoard)}\n";
+                            debug3 += $"  - W kolumnie: {board.IsInColumn(col, i + 1, playerBoard)}\n";
+                            debug3 += $"  - W sektorze: {board.IsInSector(row, col, i + 1, playerBoard)}\n";
+                            actionMask.SetActionEnabled(0, i, false); // Zablokowanie liczby i
+                        }
+                    }
+                }
+            }
+        }
+        //Debug.Log(debug3);
+        // Wyœwietlanie dostêpnych akcji na podstawie masek
+        PrintAvailableActions();
     }
+
 
 
     //na co agent ma zwracaæ uwagê
