@@ -21,7 +21,7 @@ public class SudokuAgent : Agent
 
     void Awake()
     {
-        //Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+        Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
         //Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
@@ -97,7 +97,7 @@ public class SudokuAgent : Agent
 
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
-        
+
         int[] numberCounts = new int[9]; // Tablica do zliczania wyst¹pieñ ka¿dej liczby
         //maskowanie zajêtych komórek
         for (int col = 0; col < 9; col++)
@@ -141,11 +141,11 @@ public class SudokuAgent : Agent
                         if (playerBoard[row, (j % 9)] == 0)
                         {
                             actionMask.SetActionEnabled(0, j, false);
-                            for (i = 0; i < 9; i++)
+                            /*for (i = 0; i < 9; i++)
                             {
                                 //if (i != predicted)
                                 //  actionMask.SetActionEnabled(1, i, false);
-                            }
+                            }*/
                             //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
                         }
                     }
@@ -153,31 +153,25 @@ public class SudokuAgent : Agent
                 }
                 break;
             }
-            else
+            else if (LastInRow(i))
             {
-                if (LastInRow(i))
-                    for (int j = 0; j < 81; j++)
+                for (int j = 0; j < 81; j++)
+                {
+                    int col = j % 9;  // obliczamy numer wiersza
+                    if (col == i)  // jeœli to jest element w wierszu i, pomijamy
+                        continue;
+                    else
                     {
-                        int col = j % 9;  // obliczamy numer wiersza
-                        if (col == i)  // jeœli to jest element w wierszu i, pomijamy
-                            continue;
-                        else
+                        if (playerBoard[col, (j / 9)] == 0)
                         {
-                            if (playerBoard[col, (j / 9)] == 0)
-                            {
-                                actionMask.SetActionEnabled(0, j, false);
-                                for (i = 0; i < 9; i++)
-                                {
-                                //if (i != predicted)
-                                  //  actionMask.SetActionEnabled(1, i, false);
-                                }
-                                //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
-                            }
+                            actionMask.SetActionEnabled(0, j, false);
+                            //for (i = 0; i < 9; i++)
+                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
                         }
-                        break;
                     }
+                }
+                break;
             }
-            
         }
     }
 
