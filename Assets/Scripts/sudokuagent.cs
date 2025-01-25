@@ -15,14 +15,14 @@ public class SudokuAgent : Agent
     private Board_creator board; //odnoœnik do skryptu
     private banner_bar bar; //odnoœnik do skryptu
     private Button[] buttons, intension; //odnoœnik do skryptu
-    private int episodeCount = 0,Actions=0, Streak =0; // Licznik epizodów
+    private int episodeCount = 0, Actions = 0, Streak = 0; // Licznik epizodów
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
 
     void Awake()
     {
         Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
-        //Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
+        Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
@@ -51,7 +51,7 @@ public class SudokuAgent : Agent
         else if (episodeCount > 2)
         {
             board.ResetGame(); //jeœli to kolejny epizod, zresetuj planszê(unikamy resetowania wygenerowanej planszy na poczatku)
-        } 
+        }
         playerBoard = board.GetBoard(); //przypisujemy tablicê agenta
         Board = board.GetTrueBoard(); //przypisujemy pe³ne rozwi¹zanie do porównañ
         invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
@@ -187,8 +187,8 @@ public class SudokuAgent : Agent
             for (int j = 0; j < 9; j++)
             {
                 sensor.AddObservation(playerBoard[i, j]);
-                if (playerBoard[i, j] == 0) 
-                emptyFields++; //ile mamy pustych pól
+                if (playerBoard[i, j] == 0)
+                    emptyFields++; //ile mamy pustych pól
             }
         }
         sensor.AddObservation(emptyFields);
@@ -225,6 +225,16 @@ public class SudokuAgent : Agent
                 sensor.AddObservation(sectorSum); // Dodajemy sumê sektora jako obserwacjê
             }
         }
+
+        //sprawdzamy mo¿liwe ruchy dla ka¿dego pola
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                sensor.AddObservation(CalculatePossibleValues(playerBoard, i, j));
+            }
+        }
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -234,7 +244,7 @@ public class SudokuAgent : Agent
         number = actions.DiscreteActions[1]; // Liczba do wstawienia (0-8)
         bool didMove = false; //sprawdzamy czy agent nie odpuœci³ tury
         //Debug.Log("Wybrany number: " + number);
-        int row = fieldIndex % 9; 
+        int row = fieldIndex % 9;
         int col = fieldIndex / 9;
         Actions++; //w cmd odpowiednik Step
 
@@ -257,8 +267,8 @@ public class SudokuAgent : Agent
             {
                 buttons[fieldIndex].onClick.Invoke();
                 playerBoard[row, col] = number; // Wstaw liczbê
-                AddReward(5.0f+(1f*Streak)); // Nagroda za poprawny ruch
-                if (Streak <= 5) 
+                AddReward(5.0f + (1f * Streak)); // Nagroda za poprawny ruch
+                if (Streak <= 5)
                 {
                     Streak++; //streak nagradza agenta za dokonanie poprawnych decyzji z rzêdu, co powinno go zachêciæ do dalszej eksploracji
                 }
@@ -277,12 +287,12 @@ public class SudokuAgent : Agent
                     Debug.Log("Sektor jest skoñczony");
                     AddReward(20f);
                 }
-                didMove = true; 
+                didMove = true;
                 playerBoard = board.GetBoard();
 
                 RemoveInvalidMoves(row, col); //funkcja usuwaj¹ca z hashsetu informacje o b³êdach z tej komórki
 
-                Debug.Log("Agent poprawnie oznaczy³ liczbê" +number + " w "+ row + col);
+                Debug.Log("Agent poprawnie oznaczy³ liczbê" + number + " w " + row + col);
                 //ShowPlayerBoard();
             }
             else
@@ -295,12 +305,12 @@ public class SudokuAgent : Agent
                 buttons[fieldIndex].onClick.Invoke();
                 if (invalidMoves.Contains(moveKey))
                 {
-                        AddReward(-2f);
+                    AddReward(-2f);
                 }
                 else
                 {
                     invalidMoves.Add(moveKey); // Zapisz b³êdny ruch
-                        AddReward(-1f);
+                    AddReward(-1f);
                 }
                 Streak = 0;
                 //Debug.Log("Agent niepoprawnie oznaczy³ liczbê, poprawna odpowiedŸ dla" +row + col+" = " + Board[row,col]);
@@ -318,7 +328,7 @@ public class SudokuAgent : Agent
         if (IsPuzzleSolved())
         {
             AddReward(500.0f); // Nagroda za ukoñczenie planszy
-            didMove= true;
+            didMove = true;
             EndEpisode();
         }
 
@@ -334,24 +344,12 @@ public class SudokuAgent : Agent
         }*/
     }
 
-    private bool IsMoveValid(int row, int col, int number) //sprawdzamy czy ruch jest poprawny
+    private bool IsMoveValid(int row, int col, int number)
     {
-        //Debug.Log("IsInRow: " + board.IsInRow(row, number - 1, Board));
-        //Debug.Log("IsInColumn: " + board.IsInColumn(col, number - 1, Board));
-        //Debug.Log("IsInSector: " + board.IsInSector(row, col, number - 1, Board));
-        /*if (board.IsInRow(row, number,Board) ==false && board.IsInColumn(col, number, Board)==false && board.IsInSector(row, col, number, Board) ==false)
-            return true;
-        else
-            return false;
-        */
-        if (Board[row, col] == number)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        // SprawdŸ regu³y Sudoku zamiast porównywaæ z rozwi¹zaniem
+        return !board.IsInRow(row, number, playerBoard)
+            && !board.IsInColumn(col, number, playerBoard)
+            && !board.IsInSector(row, col, number, playerBoard);
     }
 
     private bool IsPuzzleSolved() //sprawdzamy czy agent ukoñczy³ planszê
@@ -420,13 +418,13 @@ public class SudokuAgent : Agent
         invalidMoves.RemoveWhere(move => move.StartsWith(rowColKey));
     }
 
-    bool ObviousMistake(int row,int col,int number, int[,] tab) //funkcja nak³adaj¹ca dodatkow¹ karê, jeœli liczba wyst¹pi³a w wierszu, kolumnie, sektorze
+    bool ObviousMistake(int row, int col, int number, int[,] tab) //funkcja nak³adaj¹ca dodatkow¹ karê, jeœli liczba wyst¹pi³a w wierszu, kolumnie, sektorze
     {
         if (board.IsInRow(row, number, tab) || board.IsInColumn(col, number, tab) || board.IsInSector(row, col, number, tab))
         {
             Debug.Log("IsInRow: " + board.IsInRow(row, number, tab));
             Debug.Log("IsInColumn: " + board.IsInColumn(col, number, tab));
-            Debug.Log("IsInSector: " + board.IsInSector(row,col, number, tab));
+            Debug.Log("IsInSector: " + board.IsInSector(row, col, number, tab));
             return true;
         }
         else
@@ -477,12 +475,12 @@ public class SudokuAgent : Agent
         {
             //Debug.Log("jestem na: " + playerBoard[j, col]);
             sum = sum + playerBoard[j, col];
-            if(playerBoard[j, col] > 0)
+            if (playerBoard[j, col] > 0)
                 count++;
         }
         //Debug.Log("count: " + count);
         //Debug.Log("sum: " + sum);
-        if(count == 8)
+        if (count == 8)
             lic = true;
         return lic;
     }
@@ -513,7 +511,7 @@ public class SudokuAgent : Agent
         int predicted = 0;
         for (int j = 0; j < 9; j++)
         {
-            if (row) 
+            if (row)
             {
                 sum = sum + playerBoard[type, j];
                 Debug.Log("suma wiersza" + sum);
@@ -526,6 +524,33 @@ public class SudokuAgent : Agent
         }
         predicted = 45 - sum - 1;
         return predicted;
+    }
+
+    int CalculatePossibleValues(int[,] grid, int row, int col)
+    {
+        if (grid[row, col] != 0) return 0; // komórka ju¿ wype³niona
+
+        HashSet<int> possibleValues = new HashSet<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+        // SprawdŸ wiersz i kolumnê
+        for (int i = 0; i < 9; i++)
+        {
+            possibleValues.Remove(grid[row, i]);
+            possibleValues.Remove(grid[i, col]);
+        }
+
+        // SprawdŸ podkwadrat 3x3
+        int startRow = 3 * (row / 3);
+        int startCol = 3 * (col / 3);
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                possibleValues.Remove(grid[startRow + i, startCol + j]);
+            }
+        }
+
+        return possibleValues.Count;
     }
 
     public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste

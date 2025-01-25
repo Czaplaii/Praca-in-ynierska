@@ -1,22 +1,37 @@
 behaviors:
-  SudokuAgent:  # Nazwa agenta
-    trainer_type: ppo  # Typ trenera (Proximal Policy Optimization)
+  SudokuAgent:
+    trainer_type: ppo #rodzaj treningu
     hyperparameters:
-      batch_size: 128
-      buffer_size: 4096
-      learning_rate: 0.0003
-      beta: 0.01 //eksploracja rozwiązań
-      epsilon: 0.2
-      lambd: 0.95
-      num_epoch: 3
+      batch_size: 4096 #próbki podczas jednej aktualizacji modelu
+      buffer_size: 32768 #bufor doświadczeń - ile agent przechowuje kroków w środowisku
+      learning_rate: 3e-4  # szybkość uczenia
+      beta: 0.001 #entropia, zachęta do eksploracji
+      epsilon: 0.15 #stabilność
+      lambd: 0.95 #GAE
+      num_epoch: 3 #liczba epok treningowych
+      learning_rate_schedule: linear #liniowe zmniejszenie learning rate w czasie treningu
+    
     network_settings:
-      num_layers: 2
-      hidden_units: 256
-      normalize: true
+      normalize: true #normalizacja danych
+      hidden_units: 512    #neurony w warstwach ukrytych
+      num_layers: 3        #liczba warstw ukrytych
+      vis_encode_type: simple #metoda kodowania danych
+      memory:
+        sequence_length: 32 #długość sekwencji danych
+        memory_size: 128 #rozmiar pamięci
+    
     reward_signals:
       extrinsic:
-        gamma: 0.99
-        strength: 1.0
-    max_steps: 2000000  # Maksymalna liczba kroków treningowych
-    time_horizon: 64
-    summary_freq: 50000  # Częstotliwość zapisywania statystyk
+        gamma: 0.995       # skupienie agenta na długoterminowych celach
+        strength: 1.0   #waga nagród
+      curiosity:
+        gamma: 0.9  #
+        strength: 0.02     #wpływ ciekawości na eksploracje
+        encoding_size: 256 # rozmiar reprezentacji
+        learning_rate: 3e-4 #szybkość uczenia dla modelu ciekawości
+    
+    keep_checkpoints: 10 #liczba odgórnie zapisywanych "Checkpointów" podczas treningu np. zapis modelu onnx co maxsteps / keep_checkpoints
+    max_steps: 5000000     # maksymalna ilość kroków podczas treningu (ruchów)
+    time_horizon: 200      # liczba kroków przed resetem pamięci agenta
+    summary_freq: 50000 #co ile kroków wyświetlać statystyki treningu
+    threaded: true #wielowątkowość do przyspieszenia agenta

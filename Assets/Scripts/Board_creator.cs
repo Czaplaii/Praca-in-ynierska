@@ -16,7 +16,7 @@ public class Board_creator : MonoBehaviour
     [SerializeField] List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // lista numerów do wyboru
     [SerializeField] private int seed; // ziarno do œledzenia konkretnego losowania
     private System.Random rand; // losowanie
-    [SerializeField, Range(1, 3)] private int difficulty; // poziom trudnoœci
+    [SerializeField, Range(1, 81)] private int difficulty; // poziom trudnoœci
     private clock clockreset; // odniesienie do clock
     public SudokuAgent sudokuAgent;
     [Header("Randomized Puzzle Settings")]
@@ -207,24 +207,8 @@ public class Board_creator : MonoBehaviour
     //wype³niamy losowe niektóre komórki z tablicy guzików odpowiadaj¹cymi komórkami z tablicy numerów
     void PuzzleMaker() //wersja wstêpna z pokazywaniem komórek na bazie iloœci
     {
-
-        int show;
-        if (difficulty == 1)
+        for (int i = 0;i < (81-difficulty); i++)
         {
-            //show = rand.Next(63, 70);
-            show = rand.Next(41, 51);
-        }
-        else if (difficulty == 2)
-        {
-            show = rand.Next(31, 41);
-        }
-        else
-        {
-            show = rand.Next(21,31);
-        }
-        for (int i = 0;i < show; i++)
-        {
-
             int k = rand.Next(0,81);
             //Debug.Log("wylosowano : " + show);
             TMP_Text buttonText = BoardButtons[k].GetComponentInChildren<TMP_Text>();
@@ -334,6 +318,25 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
             button.interactable = true; // Przywróæ interaktywnoœæ
             button.image.color = Color.white; // Przywróæ domyœlny kolor
             
+        }
+        //curriculum learning
+        switch(PlayerPrefs.GetInt("iter"))
+        {
+            case int n when n >= 250000:
+                difficulty = 32; // Najwy¿szy poziom trudnoœci
+                break;
+
+            case int n when n >= 10000:
+                difficulty = 24; // Œredni poziom trudnoœci
+                break;
+
+            case int n when n >= 1000:
+                difficulty = 16; // £atwy poziom trudnoœci
+                break;
+
+            default:
+                difficulty = 8; // Brak trudnoœci lub pocz¹tkowy poziom
+                break;
         }
 
         // Wygeneruj now¹ planszê
