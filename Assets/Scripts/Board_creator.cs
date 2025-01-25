@@ -8,6 +8,7 @@ using Unity.VisualScripting;
 using static UnityEngine.GraphicsBuffer;
 using UnityEditor;
 using Google.Protobuf.WellKnownTypes;
+using Unity.MLAgents;
 
 public class Board_creator : MonoBehaviour
 {
@@ -69,10 +70,10 @@ public class Board_creator : MonoBehaviour
     void CreateBoard()
     {
         ShuffleList(numbers); // mieszamy numery
-        BoardFiller(0, 0);
+        BoardFiller(0, 0, Board);
     }
 
-    bool BoardFiller(int row, int column) //uzupe³nienie tablicy
+    public bool BoardFiller(int row, int column, int[,] tab) //uzupe³nienie tablicy
     {
         if (row == 9) // czy skoñczyliœmy ostatni wiersz
         {
@@ -81,28 +82,28 @@ public class Board_creator : MonoBehaviour
 
         if (column == 9) //czy ostatnia kolumna w wierszu
         {
-            return BoardFiller(row + 1, 0); // skoñczyliœmy ostatni¹ kolumnê, przechodzimy do nastêpnego wiersza
+            return BoardFiller(row + 1, 0, tab); // skoñczyliœmy ostatni¹ kolumnê, przechodzimy do nastêpnego wiersza
         }
 
         // jeœli komórka jest pe³na, przechodzimy do kolejnej
-        if (Board[row, column] != 0) //czy pe³na komórka
+        if (tab[row, column] != 0) //czy pe³na komórka
         {
-            return BoardFiller(row, column + 1); // powtórz funkcjê dla kolejnej komórki
+            return BoardFiller(row, column + 1, tab); // powtórz funkcjê dla kolejnej komórki
         }
 
-        if (Board[row, column] == 0) //jeœli komórka jest pusta
+        if (tab[row, column] == 0) //jeœli komórka jest pusta
         {
             foreach (var number in numbers) //iteracja po liœcie numerów
             {
-                if (!IsInRow(row, number, Board) && !IsInColumn(column, number, Board) && !IsInSector(row, column, number,Board)) //czy zgodna z zasadami
+                if (!IsInRow(row, number, tab) && !IsInColumn(column, number, tab) && !IsInSector(row, column, number,tab)) //czy zgodna z zasadami
                 {
-                    Board[row, column] = number; // Umieszczamy liczbê
+                    tab[row, column] = number; // Umieszczamy liczbê
                     //Przypisz(row, column, number); // Aktualizujemy UI
-                    if (BoardFiller(row, column + 1)) // Jeœli nie mo¿na dalej wype³niæ
+                    if (BoardFiller(row, column + 1, tab)) // Jeœli nie mo¿na dalej wype³niæ
                     {
                         return true;
                     }
-                    Board[row, column] = 0; // "wymazujemy" wartoœæ z komórki
+                    tab[row, column] = 0; // "wymazujemy" wartoœæ z komórki
                 }
             }
         }
@@ -320,8 +321,10 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
             
         }
         //curriculum learning
-        switch(PlayerPrefs.GetInt("iter"))
+        if (Academy.Instance.IsCommunicatorOn)
         {
+            switch (PlayerPrefs.GetInt("iter"))
+            {
             case int n when n >= 250000:
                 difficulty = 32; // Najwy¿szy poziom trudnoœci
                 break;
@@ -337,6 +340,7 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
             default:
                 difficulty = 8; // Brak trudnoœci lub pocz¹tkowy poziom
                 break;
+            }
         }
 
         // Wygeneruj now¹ planszê
@@ -410,4 +414,21 @@ public void OnButtonClicked(int index) //logika "kolorowania guzików" i uzupe³ni
     {
         mode = 1;
     }
+
+    public void RefreshUI()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                int index = i * 9 + j;
+                TMP_Text buttonText = BoardButtons[index].GetComponentInChildren<TMP_Text>();
+                buttonText.text = PlayerBoard[i, j] == 0 ? " " : PlayerBoard[i, j].ToString();
+                Button button = BoardButtons[index];
+                button.interactable = false;
+                button.image.color = Color.white; // Przywróæ domyœlny kolor
+            }
+        }
+    }
+
 }

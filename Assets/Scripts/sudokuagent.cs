@@ -7,21 +7,23 @@ using Unity.VisualScripting;
 using System.Collections.Generic;
 using Unity.Barracuda;
 using System;
+using System.Collections;
 
 public class SudokuAgent : Agent
 {
     public int[,] Board = new int[9, 9]; // Pe³ne rozwi¹zanie sudoku (ukryte przed AI)
-    private int[,] playerBoard = new int[9, 9]; // Plansza gracza (to widzi i modyfikuje AI)
+    int[,] playerBoard = new int[9, 9]; // Plansza gracza (to widzi i modyfikuje AI)
     private Board_creator board; //odnoœnik do skryptu
     private banner_bar bar; //odnoœnik do skryptu
     private Button[] buttons, intension; //odnoœnik do skryptu
-    private int episodeCount = 0, Actions = 0, Streak = 0; // Licznik epizodów
+    private int episodeCount = 0, Actions = 0, Streak = 0, EpisodeActions = 0; // Licznik epizodów
     int number = -1; //numer którym agent operuje na swojej tablicy
     private HashSet<string> invalidMoves = new HashSet<string>();
+    private bool isAgentPaused= false;
 
     void Awake()
     {
-        Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+        //Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
         Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
@@ -40,13 +42,14 @@ public class SudokuAgent : Agent
     //po rozpoczêciu 1 sesji sudoku(nowa mapa)
     public override void OnEpisodeBegin()
     {
+        EpisodeActions = 0;
+        isAgentPaused = false;
         episodeCount++; //do wyœwietlania epizodów
         PlayerPrefs.SetInt("iter", episodeCount);
         if (episodeCount == 2)
         {
             board.ChangeMode();
             board.ResetGame();
-
         }
         else if (episodeCount > 2)
         {
@@ -57,6 +60,7 @@ public class SudokuAgent : Agent
         invalidMoves.Clear(); //czyœcimy b³êdne ruchy z poprzedniej planszy
         ShowPlayerBoard(); // do debugowania
         ShowTruePlayerBoard(); //do debugowania
+
     }
 
     public void PrintAvailableActions()
@@ -97,80 +101,82 @@ public class SudokuAgent : Agent
 
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
-
-        int[] numberCounts = new int[9]; // Tablica do zliczania wyst¹pieñ ka¿dej liczby
-        //maskowanie zajêtych komórek
-        for (int col = 0; col < 9; col++)
+        if (!IsPuzzleSolved())
         {
-            for (int row = 0; row < 9; row++)
+            int[] numberCounts = new int[9]; // Tablica do zliczania wyst¹pieñ ka¿dej liczby
+                                             //maskowanie zajêtych komórek
+            for (int col = 0; col < 9; col++)
             {
-                int index = col * 9 + row;
-
-                if (playerBoard[row, col] != 0) // Komórka zajêta
+                for (int row = 0; row < 9; row++)
                 {
-                    actionMask.SetActionEnabled(0, index, false); //maskowanie liczb
-                    int value = playerBoard[row, col]; //przypisz wyst¹pienie
-                    numberCounts[value - 1]++; //inkrementuj wyst¹pienie danej liczby
+                    int index = col * 9 + row;
+
+                    if (playerBoard[row, col] != 0) // Komórka zajêta
+                    {
+                        actionMask.SetActionEnabled(0, index, false); //maskowanie liczb
+                        int value = playerBoard[row, col]; //przypisz wyst¹pienie
+                        numberCounts[value - 1]++; //inkrementuj wyst¹pienie danej liczby
+                    }
                 }
             }
-        }
-        string debug2 = "Zliczanie liczb:\n";
-        //maskowanie liczb gdy wyst¹pi ich 9
-        for (int i = 0; i < numberCounts.Length; i++)
-        {
-            debug2 += $"Liczba {i + 1}: {numberCounts[i]}\n";
-            if (numberCounts[i] >= 9) //jeœli dana liczba wyst¹pi 9 razy w tablicy
+            string debug2 = "Zliczanie liczb:\n";
+            //maskowanie liczb gdy wyst¹pi ich 9
+            for (int i = 0; i < numberCounts.Length; i++)
             {
-                actionMask.SetActionEnabled(1, i, false); //zamaskuj t¹ liczbê przed agentem
-            }
-        }
-        //Debug.Log(debug2);
-
-        for (int i = 0; i < 9; i++)
-        {
-            if (LastInCol(i))
-            {
-                for (int j = 0; j < 81; j++)
+                debug2 += $"Liczba {i + 1}: {numberCounts[i]}\n";
+                if (numberCounts[i] >= 9) //jeœli dana liczba wyst¹pi 9 razy w tablicy
                 {
-                    int row = j / 9;  // obliczamy numer wiersza
-                    //Debug.Log(row + "=row, i = " + i);
-                    if (row == i)  // jeœli to jest element w wierszu i, pomijamy
-                        continue;
-                    else
+                    actionMask.SetActionEnabled(1, i, false); //zamaskuj t¹ liczbê przed agentem
+                }
+            }
+            //Debug.Log(debug2);
+
+            for (int i = 0; i < 9; i++)
+            {
+                if (LastInCol(i))
+                {
+                    for (int j = 0; j < 81; j++)
                     {
-                        if (playerBoard[row, (j % 9)] == 0)
+                        int row = j / 9;  // obliczamy numer wiersza
+                                          //Debug.Log(row + "=row, i = " + i);
+                        if (row == i)  // jeœli to jest element w wierszu i, pomijamy
+                            continue;
+                        else
                         {
-                            actionMask.SetActionEnabled(0, j, false);
-                            /*for (i = 0; i < 9; i++)
+                            if (playerBoard[row, (j % 9)] == 0)
                             {
-                                //if (i != predicted)
-                                //  actionMask.SetActionEnabled(1, i, false);
-                            }*/
-                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
+                                actionMask.SetActionEnabled(0, j, false);
+                                /*for (i = 0; i < 9; i++)
+                                {
+                                    //if (i != predicted)
+                                    //  actionMask.SetActionEnabled(1, i, false);
+                                }*/
+                                //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
+                            }
                         }
-                    }
 
+                    }
+                    break;
                 }
-                break;
-            }
-            else if (LastInRow(i))
-            {
-                for (int j = 0; j < 81; j++)
+                else if (LastInRow(i))
                 {
-                    int col = j % 9;  // obliczamy numer wiersza
-                    if (col == i)  // jeœli to jest element w wierszu i, pomijamy
-                        continue;
-                    else
+                    for (int j = 0; j < 81; j++)
                     {
-                        if (playerBoard[col, (j / 9)] == 0)
+                        int col = j % 9;  // obliczamy numer wiersza
+                        if (col == i)  // jeœli to jest element w wierszu i, pomijamy
+                            continue;
+                        else
                         {
-                            actionMask.SetActionEnabled(0, j, false);
-                            //for (i = 0; i < 9; i++)
-                            //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
+                            if (playerBoard[col, (j / 9)] == 0)
+                            {
+                                actionMask.SetActionEnabled(0, j, false);
+                                //for (i = 0; i < 9; i++)
+                                //Debug.Log("zablokowane: " + col+" " + (j / 9) + " - " + playerBoard[col, (j / 9)]);
+                            }
                         }
                     }
+                    break;
                 }
-                break;
             }
         }
     }
@@ -239,6 +245,8 @@ public class SudokuAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        EpisodeActions++;
+        if (isAgentPaused)return;
         // Akcja AI: wybór pola i liczby
         int fieldIndex = actions.DiscreteActions[0]; // Pole do modyfikacji (0-80)
         number = actions.DiscreteActions[1]; // Liczba do wstawienia (0-8)
@@ -289,9 +297,7 @@ public class SudokuAgent : Agent
                 }
                 didMove = true;
                 playerBoard = board.GetBoard();
-
                 RemoveInvalidMoves(row, col); //funkcja usuwaj¹ca z hashsetu informacje o b³êdach z tej komórki
-
                 Debug.Log("Agent poprawnie oznaczy³ liczbê" + number + " w " + row + col);
                 //ShowPlayerBoard();
             }
@@ -332,6 +338,23 @@ public class SudokuAgent : Agent
             EndEpisode();
         }
 
+        if(EpisodeActions == 100)
+        {
+            StartCoroutine(EpisodeEnd());
+        }
+        /*
+        if (Actions >= (MaxStep-1) && !IsPuzzleSolved())
+        {
+            Debug.Log("Agent nie ukoñczy³ planszy. Uzupe³nianie...");
+            if (board.BoardFiller(0,0, playerBoard))
+            {
+                AddReward(-10f); // Kara za nieukoñczenie
+                board.RefreshUI();
+                StartCoroutine(DelayCoroutine());
+            }
+        }
+        */
+
         // Jeœli agent nie wykona³ ruchu, na³ó¿ dodatkow¹ karê
         if (!didMove)
         {
@@ -346,10 +369,14 @@ public class SudokuAgent : Agent
 
     private bool IsMoveValid(int row, int col, int number)
     {
-        // SprawdŸ regu³y Sudoku zamiast porównywaæ z rozwi¹zaniem
-        return !board.IsInRow(row, number, playerBoard)
-            && !board.IsInColumn(col, number, playerBoard)
-            && !board.IsInSector(row, col, number, playerBoard);
+        if (Board[row, col] == number)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private bool IsPuzzleSolved() //sprawdzamy czy agent ukoñczy³ planszê
@@ -552,6 +579,17 @@ public class SudokuAgent : Agent
 
         return possibleValues.Count;
     }
+
+    private IEnumerator EpisodeEnd()
+    {
+        isAgentPaused = true;
+        board.BoardFiller(0, 0, playerBoard);
+        board.RefreshUI();
+        yield return new WaitForSecondsRealtime(5f);
+        EndEpisode();
+    }
+
+
 
     public override void Heuristic(in ActionBuffers actionsOut) //mo¿na u¿yæ do debugowania i sprawdzania rozwi¹zañ, na czas treningu powinno zostac puste
     {
