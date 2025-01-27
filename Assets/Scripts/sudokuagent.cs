@@ -23,13 +23,17 @@ public class SudokuAgent : Agent
 
     void Awake()
     {
-        //Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
+        Debug.unityLogger.logEnabled = false; //wy³¹cz logi na czas treningu agenta
         Time.timeScale = 0.1f; //spowolnienie czasu pozwalaj¹ce obserwowaæ i œledziæ zachowania agenta
     }
 
     //Inicjalizacja zachowañ agenta
     public override void Initialize()
     {
+        if (Academy.Instance.IsCommunicatorOn)
+        {
+            MaxStep= 100;
+        }
         board = FindObjectOfType<Board_creator>(); //przypisanie obiektu ze skryptem
         bar = FindObjectOfType<banner_bar>(); //przypisanie obiektu ze skryptem
         playerBoard = board.GetBoard(); //przepisz tablicê zagadki agentowi
@@ -338,7 +342,7 @@ public class SudokuAgent : Agent
             EndEpisode();
         }
 
-        if(EpisodeActions == 100)
+            if (EpisodeActions == 100)
         {
             StartCoroutine(EpisodeEnd());
         }
